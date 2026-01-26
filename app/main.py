@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles  # 🆕 IMPORT THIS
 from contextlib import asynccontextmanager
 import os
 
 from app.database import engine, Base, SessionLocal
 from app.models import Driver, SystemSetting, User, UserRole
-# ⚠️ IMPORT ALL ROUTERS (Including the new agent_office)
 from app.routers import payment, driver, admin, market, agent_office
 
 # --- 1. SYSTEM STARTUP ---
@@ -15,11 +15,10 @@ async def lifespan(app: FastAPI):
     print("🚀 Flip Trybe Server Starting Up...")
     
     # ⚠️ DATABASE RESET (Only for Development)
-    # This deletes old tables and rebuilds them with the new Wallet/Withdrawal columns
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     
-    # SEED DATA (So you don't start empty)
+    # SEED DATA
     db = SessionLocal()
     try:
         # 1. Create Default Logistics Drivers
@@ -30,24 +29,24 @@ async def lifespan(app: FastAPI):
         for member in team:
             db.add(Driver(name=member["name"], phone=member["phone"], vehicle_type=member["vehicle"], status="AVAILABLE"))
 
-        # 2. Create Agent Chidi (High Rank, Lagos, Ikorodu Specialist)
+        # 2. Create Agent Chidi
         agent = User(
             full_name="Agent Chidi", 
             phone="080AGENT001", 
-            role=UserRole.AGENT,
+            role=UserRole.AGENT, 
             email="agent@fliptrybe.com",
             state="Lagos",
-            city="Ikorodu",  # 📍 Bases in Ikorodu
-            rating=5.0,      # ⭐️ Top Rated
+            city="Ikorodu",
+            rating=5.0,
             wallet_balance=0.0
         )
         db.add(agent)
         
-        # 3. Create User Tunde (Regular Buyer, Ikeja)
+        # 3. Create User Tunde
         buyer = User(
-            full_name="Tunde User", 
+            full_name="Tunde Buyer", 
             phone="080BUYER001", 
-            role=UserRole.USER,
+            role=UserRole.USER, 
             email="tunde@fliptrybe.com",
             state="Lagos",
             city="Ikeja",
@@ -55,11 +54,9 @@ async def lifespan(app: FastAPI):
         )
         db.add(buyer)
         
-        # 4. Create Default Payment Setting
         db.add(SystemSetting(key="payment_mode", value="MANUAL"))
-        
         db.commit()
-        print("✅ Database Reset & Seeded with Agents/Users")
+        print("✅ Database Reset & Seeded")
     except Exception as e:
         print(f"❌ Startup Error: {e}")
     finally:
@@ -84,9 +81,15 @@ app.include_router(payment.router, prefix="/api/payment", tags=["Payment"])
 app.include_router(driver.router, prefix="/api/driver", tags=["Driver"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(market.router, prefix="/api/market", tags=["Marketplace"])
-app.include_router(agent_office.router, prefix="/api/agent", tags=["Agent Office"]) # 🆕 New Router
+app.include_router(agent_office.router, prefix="/api/agent", tags=["Agent Office"])
 
-# --- 4. FRONTEND PAGES ---
+# --- 4. SERVE STATIC FILES (VIDEO) ---
+# This line makes the 'app/static' folder accessible at '/static'
+if not os.path.exists("app/static"):
+    os.makedirs("app/static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# --- 5. FRONTEND PAGES ---
 def serve_file(filename: str):
     path = os.path.join(os.getcwd(), filename)
     if os.path.exists(path):
@@ -99,7 +102,7 @@ def home(): return serve_file("index.html")
 @app.get("/market")
 def market_page(): return serve_file("market.html")
 
-@app.get("/agent-office") # 🆕 Agent Dashboard
+@app.get("/agent-office")
 def agent_page(): return serve_file("agent.html")
 
 @app.get("/admin-panel")
