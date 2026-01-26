@@ -19,3 +19,11 @@ else:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+# 👇 THIS IS THE MISSING TOOL THAT CAUSED THE CRASH
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
