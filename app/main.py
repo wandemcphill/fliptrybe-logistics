@@ -84,3 +84,25 @@ def driver_page(): return serve_file("driver.html")
 
 @app.get("/success")
 def success_page(): return serve_file("success.html")
+# --- 4. FRONTEND PAGE SERVING ---
+def serve_file(filename: str):
+    path = os.path.join(os.getcwd(), filename)
+    if os.path.exists(path):
+        return FileResponse(path)
+    return {"error": f"File '{filename}' not found"}
+
+@app.get("/")
+def home(): return serve_file("index.html")
+
+@app.get("/admin-panel")
+def admin_page(): return serve_file("admin.html")
+
+@app.get("/driver-app")
+def driver_page(): return serve_file("driver.html")
+
+@app.get("/success")
+def success_page(): return serve_file("success.html")
+
+# 👇 THIS IS THE NEW LINE YOU WERE MISSING
+@app.get("/market")
+def market_page(): return serve_file("market.html")
