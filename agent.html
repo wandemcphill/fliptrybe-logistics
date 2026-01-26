@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flip Trybe | Agent Office</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }</script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans pb-24">
+
+    <nav class="bg-black text-white p-4 sticky top-0 z-50">
+        <div class="max-w-lg mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center font-bold">A.</div>
+                <span class="font-bold tracking-tight">Agent Office</span>
+            </div>
+            <div class="text-xs bg-white/10 px-3 py-1 rounded-full">
+                <i class="fas fa-circle text-green-400 text-[8px] mr-1"></i> Live
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-lg mx-auto p-5">
+        
+        <div class="bg-gradient-to-br from-gray-900 to-black text-white p-6 rounded-3xl shadow-xl mb-8 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+            
+            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Available Balance</p>
+            <h1 class="text-4xl font-bold mb-6" id="wallet-balance">₦0.00</h1>
+            
+            <div class="flex gap-3">
+                <button onclick="openWithdrawModal()" class="flex-1 bg-white text-black py-3 rounded-xl font-bold text-sm hover:bg-gray-100 transition">
+                    Withdraw
+                </button>
+                <div class="flex-1 bg-white/10 py-3 rounded-xl flex flex-col items-center justify-center">
+                    <span class="text-[10px] text-gray-400">Total Earnings</span>
+                    <span class="font-bold text-xs" id="total-earnings">₦0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div class="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mb-2"><i class="fas fa-box"></i></div>
+                <h3 class="font-bold text-xl" id="stat-sold">0</h3>
+                <p class="text-xs text-gray-400">Items Sold</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div class="w-8 h-8 bg-green-50 text-green-600 rounded-lg flex items-center justify-center mb-2"><i class="fas fa-check-circle"></i></div>
+                <h3 class="font-bold text-xl" id="stat-active">0</h3>
+                <p class="text-xs text-gray-400">Active Listings</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-t-3xl shadow-sm border border-gray-100 min-h-[50vh]">
+            <div class="flex border-b border-gray-100">
+                <button onclick="switchView('DECLUTTER')" id="tab-declutter" class="flex-1 py-4 text-sm font-bold border-b-2 border-black">Declutter Listings</button>
+                <button onclick="switchView('SHORTLET')" id="tab-shortlet" class="flex-1 py-4 text-sm text-gray-400 font-medium">Shortlets</button>
+            </div>
+            
+            <div id="listings-container" class="p-5 space-y-4">
+                <div class="text-center py-10 text-gray-400">Loading...</div>
+            </div>
+        </div>
+        
+    </main>
+
+    <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 flex gap-4 z-40">
+        <button onclick="location.href='/market'" class="bg-black text-white px-6 py-3 rounded-full font-bold shadow-lg flex items-center gap-2 hover:scale-105 transition">
+            <i class="fas fa-plus"></i> New Listing
+        </button>
+    </div>
+
+    <div id="withdraw-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeWithdrawModal()"></div>
+        <div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 animate-fade-in-up">
+            <h2 class="text-xl font-bold mb-1">Withdraw Funds</h2>
+            <p class="text-xs text-gray-500 mb-6">5% Commission fee applies per withdrawal.</p>
+            
+            <form onsubmit="submitWithdraw(event)" class="space-y-4">
+                <input type="number" id="w-amount" placeholder="Amount (₦)" class="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold">
+                <input type="text" id="w-bank" placeholder="Bank Name" class="w-full p-4 bg-gray-50 rounded-xl outline-none">
+                <input type="text" id="w-acct" placeholder="Account Number" class="w-full p-4 bg-gray-50 rounded-xl outline-none">
+                
+                <button type="submit" class="w-full bg-black text-white py-4 rounded-xl font-bold">Process Withdrawal</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "/api/agent";
+        const AGENT_ID = 1; // Hardcoded Chidi for Demo
+        let dashboardData = null;
+
+        async function loadDashboard() {
+            const res = await fetch(`${API_URL}/dashboard/${AGENT_ID}`);
+            dashboardData = await res.json();
+            
+            // 1. Fill Stats
+            document.getElementById('wallet-balance').innerText = "₦" + dashboardData.stats.balance.toLocaleString();
+            document.getElementById('total-earnings').innerText = "₦" + dashboardData.stats.total_earnings.toLocaleString();
+            document.getElementById('stat-sold').innerText = dashboardData.stats.items_sold;
+            document.getElementById('stat-active').innerText = dashboardData.stats.active_listings;
+            
+            // 2. Load Default Tab
+            renderListings('DECLUTTER');
+        }
+
+        function renderListings(type) {
+            const container = document.getElementById('listings-container');
+            const list = type === 'DECLUTTER' ? dashboardData.listings.declutter : dashboardData.listings.shortlet;
+            
+            if(list.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">No ${type.toLowerCase()} listings found.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(item => `
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div>
+                        <h4 class="font-bold text-sm">${item.title}</h4>
+                        <span class="text-[10px] ${item.is_sold ? 'text-green-600 font-bold' : 'text-gray-400'}">
+                            ${item.is_sold ? 'SOLD' : 'Active'}
+                        </span>
+                    </div>
+                    <div class="text-right">
+                        <span class="block font-bold text-sm">₦${item.price.toLocaleString()}</span>
+                        <span class="text-[10px] text-gray-400">Comm: ₦${(item.price*0.1).toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchView(type) {
+            document.getElementById('tab-declutter').className = type === 'DECLUTTER' ? 'flex-1 py-4 text-sm font-bold border-b-2 border-black' : 'flex-1 py-4 text-sm text-gray-400 font-medium';
+            document.getElementById('tab-shortlet').className = type === 'SHORTLET' ? 'flex-1 py-4 text-sm font-bold border-b-2 border-black' : 'flex-1 py-4 text-sm text-gray-400 font-medium';
+            renderListings(type);
+        }
+
+        async function submitWithdraw(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('w-amount').value);
+            if(!amount) return;
+
+            try {
+                const res = await fetch(`${API_URL}/withdraw`, {
+                    method: "POST", headers: {"Content-Type":"application/json"},
+                    body: JSON.stringify({
+                        agent_id: AGENT_ID,
+                        amount: amount,
+                        bank_name: document.getElementById('w-bank').value,
+                        account_number: document.getElementById('w-acct').value
+                    })
+                });
+                
+                if(res.ok) {
+                    const d = await res.json();
+                    alert(d.msg);
+                    closeWithdrawModal();
+                    loadDashboard(); // Refresh Balance
+                } else {
+                    alert("Failed: Check Balance");
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function openWithdrawModal() { document.getElementById('withdraw-modal').classList.remove('hidden'); }
+        function closeWithdrawModal() { document.getElementById('withdraw-modal').classList.add('hidden'); }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

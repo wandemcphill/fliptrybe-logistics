@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime, timezone
 
 from app.database import get_db
 from app.models import Item, User, Order, ItemCategory, OrderStatus, UserRole
@@ -11,62 +10,128 @@ from app.notifications import send_whatsapp
 router = APIRouter()
 
 # --- INPUT SCHEMAS ---
-class AgentListing(BaseModel):
+class UnifiedListing(BaseModel):
     title: str
     description: str
     price: float
-    type: ItemCategory # DECLUTTER or SHORTLET
+    type: ItemCategory
     lister_id: int
-    # Client Info (Required for Agents)
-    client_name: str
-    client_phone: str
-    client_pickup_address: str
-    client_pickup_time: str
-    client_account_details: str
+    # Location (Optional for User, Required for Agent)
+    state: Optional[str] = None 
+    city: Optional[str] = None
+    # Client Data (For Agents)
+    client_name: Optional[str] = None
+    client_phone: Optional[str] = None
+    client_pickup_address: Optional[str] = None
 
 class PurchaseRequest(BaseModel):
     buyer_id: int
     item_id: int
-    refund_account: str # Buyer MUST provide this
+    refund_account: str
 
 # --- ROUTES ---
 
-@router.post("/agent-list-item")
-def agent_list_item(data: AgentListing, db: Session = Depends(get_db)):
+@router.get("/feed")
+def get_smart_feed(
+    user_state: str = "Lagos", 
+    user_city: str = "Ikeja", 
+    view_mode: str = "LOCAL", # LOCAL or NATIONWIDE
+    db: Session = Depends(get_db)
+):
     """
-    Agents list items here. 
-    System automatically calculates the 15% commission split.
+    THE SMART ALGORITHM:
+    1. Filter by 'Sold' status.
+    2. If LOCAL mode: Filter strictly by State.
+    3. Sort by: Exact City Match (Ikorodu first) -> Agent Rating (High rank) -> Price (Low).
     """
-    # 1. Calculate Split
-    platform_cut = data.price * 0.05
-    agent_cut = data.price * 0.10
-    owner_payout = data.price * 0.85
+    query = db.query(Item).join(User).filter(Item.is_sold == False)
     
+    if view_mode == "LOCAL":
+        query = query.filter(Item.region == user_state)
+    
+    # Fetch all items to sort in Python (easier for MVP complex sorting)
+    items = query.all()
+    
+    # 🧠 SORTING LOGIC
+    # +1000 points if City matches User City.
+    # +100 points * Agent Rating (5.0 rating = +500 points).
+    # -Price/1000 (Cheaper items score higher).
+    
+    def calculate_score(item):
+        score = 0
+        if item.city and item.city.lower() == user_city.lower():
+            score += 1000
+        if item.lister.rating:
+            score += (item.lister.rating * 100) # Boost High Ranked Agents
+        
+        # Price penalty (Higher price = Lower score)
+        score -= (item.price / 10000) 
+        return score
+
+    # Sort DESC (Highest score first)
+    sorted_items = sorted(items, key=calculate_score, reverse=True)
+    
+    return sorted_items
+
+@router.post("/list-item")
+def unified_list_item(data: UnifiedListing, db: Session = Depends(get_db)):
+    """
+    ONE BUTTON LISTING:
+    Checks if user is Agent or Regular and applies rules automatically.
+    """
+    user = db.query(User).filter(User.id == data.lister_id).first()
+    if not user: raise HTTPException(status_code=404, detail="User not found")
+    
+    # DEFAULTS
+    final_region = user.state
+    final_city = user.city
+    final_address = f"Registered Address in {user.city}"
+    
+    # AGENT OVERRIDES
+    if user.role == UserRole.AGENT:
+        if not data.state or not data.city:
+            # For MVP simplicity, if they forgot, default to their profile
+            final_region = data.state or user.state
+            final_city = data.city or user.city
+            
+        final_region = data.state or user.state
+        final_city = data.city or user.city
+        final_address = data.client_pickup_address or "Agent Office"
+        
+        # COMMISSION CALC (10% Agent, 5% Platform, 85% Client)
+        comm_agent = data.price * 0.10
+        comm_platform = data.price * 0.05
+        payout = data.price * 0.85
+    else:
+        # USER CALC (0% Agent, 5% Platform, 95% User)
+        comm_agent = 0.0
+        comm_platform = data.price * 0.05
+        payout = data.price * 0.95
+
     new_item = Item(
         type=data.type,
         title=data.title,
         description=data.description,
         price=data.price,
+        region=final_region,
+        city=final_city,
+        pickup_address=final_address,
         
         # Financials
-        commission_platform=platform_cut,
-        commission_agent=agent_cut,
-        payout_amount=owner_payout,
+        commission_agent=comm_agent,
+        commission_platform=comm_platform,
+        payout_amount=payout,
         
-        # The Secret Client Data (Hidden from public)
-        client_name=data.client_name,
-        client_phone=data.client_phone,
-        client_pickup_address=data.client_pickup_address,
-        client_pickup_time=data.client_pickup_time,
-        client_account_details=data.client_account_details,
+        # Agent Details (Only if Agent)
+        client_name=data.client_name if user.role == UserRole.AGENT else user.full_name,
+        client_phone=data.client_phone if user.role == UserRole.AGENT else user.phone,
+        client_pickup_time="9am - 5pm", 
         
-        lister_id=data.lister_id,
-        is_sold=False
+        lister_id=data.lister_id
     )
     db.add(new_item)
     db.commit()
-    db.refresh(new_item)
-    return {"status": "success", "item_id": new_item.id, "msg": "Item Listed. 85% Payout calculated."}
+    return {"status": "success", "msg": f"Listed in {final_city}, {final_region}"}
 
 @router.post("/buy-item")
 def request_purchase(req: PurchaseRequest, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
@@ -77,7 +142,6 @@ def request_purchase(req: PurchaseRequest, bg_tasks: BackgroundTasks, db: Sessio
     if not item or item.is_sold:
         raise HTTPException(status_code=400, detail="Item unavailable")
 
-    # Create 'Pending' Order
     order = Order(
         buyer_id=req.buyer_id,
         item_id=item.id,
@@ -89,8 +153,7 @@ def request_purchase(req: PurchaseRequest, bg_tasks: BackgroundTasks, db: Sessio
     db.commit()
     db.refresh(order)
     
-    # --- TRIGGER VERIFICATION MESSAGE ---
-    # We send a "Magic Link" to the Agent/Lister
+    # Send Magic Link to Lister
     lister = db.query(User).filter(User.id == item.lister_id).first()
     
     verify_link_yes = f"https://fliptrybe-app.onrender.com/api/market/verify/{order.id}/confirm"
@@ -103,7 +166,6 @@ def request_purchase(req: PurchaseRequest, bg_tasks: BackgroundTasks, db: Sessio
         f"NO (Refund Buyer): {verify_link_no}\n\n"
         f"⚠️ You have 10 hours to reply before auto-refund."
     )
-    
     bg_tasks.add_task(send_whatsapp, lister.phone, msg)
     
     return {"status": "pending", "message": "Payment received. Waiting for Seller confirmation."}
@@ -126,57 +188,24 @@ def verify_availability(order_id: int, action: str, bg_tasks: BackgroundTasks, d
         order.status = OrderStatus.CONFIRMED
         item.is_sold = True
         
-        # 1. Send Pickup Details to Buyer
+        # 💰 CREDIT AGENT WALLET
+        if lister.role == UserRole.AGENT:
+            lister.wallet_balance += item.commission_agent
+
+        # Notify Buyer
         buyer_msg = (
             f"✅ Order Confirmed! '{item.title}' is yours.\n"
-            f"Pickup Address: {item.client_pickup_address}\n"
+            f"Pickup Address: {item.pickup_address}\n"
             f"Contact Name: {item.client_name}\n"
-            f"Phone: {item.client_phone}\n"
-            f"Time: {item.client_pickup_time}"
+            f"Phone: {item.client_phone}"
         )
         bg_tasks.add_task(send_whatsapp, buyer.phone, buyer_msg)
-        
-        # 2. Send Buyer Details to Client (Seller)
-        client_msg = (
-            f"💰 Flip Trybe Sale: Your item '{item.title}' sold!\n"
-            f"Buyer: {buyer.full_name} ({buyer.phone})\n"
-            f"Please allow pickup. Payout processes after pickup."
-        )
-        bg_tasks.add_task(send_whatsapp, item.client_phone, client_msg)
-        
-        # 3. Notify Agent
-        agent_msg = f"👍 Good job. Your client's item '{item.title}' was sold. Commission pending."
-        bg_tasks.add_task(send_whatsapp, lister.phone, agent_msg)
         
     elif action == "cancel":
         # --- SCENARIO B: SOLD ELSEWHERE (NO) ---
         order.status = OrderStatus.CANCELLED_BY_SELLER
-        # Refund Logic Here (Mocked)
-        buyer_msg = (
-            f"❌ Update on '{item.title}': The seller just sold this item locally.\n"
-            f"We are processing a full refund to your account: {order.refund_account_details}."
-        )
+        buyer_msg = f"❌ Update on '{item.title}': The seller sold this locally. Refund processing to: {order.refund_account_details}."
         bg_tasks.add_task(send_whatsapp, buyer.phone, buyer_msg)
         
     db.commit()
     return {"status": "success", "action": action}
-
-@router.post("/buyer-refund/{order_id}")
-def buyer_trigger_refund(order_id: int, db: Session = Depends(get_db)):
-    """
-    Step 3: The 5-Hour Rule. Buyer can cancel if Seller is ghosting.
-    """
-    order = db.query(Order).filter(Order.id == order_id).first()
-    
-    # Check Logic
-    hours_passed = order.hours_since_creation() # Need to implement this in model or here
-    
-    if hours_passed < 5:
-        raise HTTPException(status_code=400, detail=f"Please wait. Refund button available in {5 - int(hours_passed)} hours.")
-        
-    if order.status == OrderStatus.PENDING_CONFIRMATION:
-        order.status = OrderStatus.CANCELLED_BY_SELLER
-        db.commit()
-        return {"msg": "Refund processed. Sorry for the delay."}
-        
-    return {"msg": "Cannot refund at this stage."}

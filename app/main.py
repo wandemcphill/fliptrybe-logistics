@@ -6,16 +6,16 @@ import os
 
 from app.database import engine, Base, SessionLocal
 from app.models import Driver, SystemSetting, User, UserRole
-# ⚠️ IMPORT ALL ROUTERS
-from app.routers import payment, driver, admin, market
+# ⚠️ IMPORT ALL ROUTERS (Including the new agent_office)
+from app.routers import payment, driver, admin, market, agent_office
 
 # --- 1. SYSTEM STARTUP ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 Flip Trybe Server Starting Up...")
     
-    # ⚠️ DATABASE RESET (Crucial for the new Agent features)
-    # This deletes old tables and builds new ones with the "Agent" columns
+    # ⚠️ DATABASE RESET (Only for Development)
+    # This deletes old tables and rebuilds them with the new Wallet/Withdrawal columns
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     
@@ -30,21 +30,28 @@ async def lifespan(app: FastAPI):
         for member in team:
             db.add(Driver(name=member["name"], phone=member["phone"], vehicle_type=member["vehicle"], status="AVAILABLE"))
 
-        # 2. Create an Agent (Chidi)
+        # 2. Create Agent Chidi (High Rank, Lagos, Ikorodu Specialist)
         agent = User(
             full_name="Agent Chidi", 
             phone="080AGENT001", 
             role=UserRole.AGENT,
-            email="agent@fliptrybe.com"
+            email="agent@fliptrybe.com",
+            state="Lagos",
+            city="Ikorodu",  # 📍 Bases in Ikorodu
+            rating=5.0,      # ⭐️ Top Rated
+            wallet_balance=0.0
         )
         db.add(agent)
         
-        # 3. Create a Buyer (Tunde)
+        # 3. Create User Tunde (Regular Buyer, Ikeja)
         buyer = User(
-            full_name="Tunde Buyer", 
+            full_name="Tunde User", 
             phone="080BUYER001", 
             role=UserRole.USER,
-            email="buyer@fliptrybe.com"
+            email="tunde@fliptrybe.com",
+            state="Lagos",
+            city="Ikeja",
+            rating=3.0
         )
         db.add(buyer)
         
@@ -77,19 +84,23 @@ app.include_router(payment.router, prefix="/api/payment", tags=["Payment"])
 app.include_router(driver.router, prefix="/api/driver", tags=["Driver"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(market.router, prefix="/api/market", tags=["Marketplace"])
+app.include_router(agent_office.router, prefix="/api/agent", tags=["Agent Office"]) # 🆕 New Router
 
 # --- 4. FRONTEND PAGES ---
 def serve_file(filename: str):
     path = os.path.join(os.getcwd(), filename)
     if os.path.exists(path):
         return FileResponse(path)
-    return {"error": f"File '{filename}' not found"}
+    return {"error": f"File '{filename}' not found inside {os.getcwd()}"}
 
 @app.get("/")
 def home(): return serve_file("index.html")
 
 @app.get("/market")
 def market_page(): return serve_file("market.html")
+
+@app.get("/agent-office") # 🆕 Agent Dashboard
+def agent_page(): return serve_file("agent.html")
 
 @app.get("/admin-panel")
 def admin_page(): return serve_file("admin.html")

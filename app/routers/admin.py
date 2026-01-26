@@ -1,92 +1,72 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database import SessionLocal
-from app.models import Driver, SystemSetting, User
+from sqlalchemy import func
+from app.database import get_db
+from app.models import User, Order, Item, UserRole, OrderStatus, Driver
 
 router = APIRouter()
 
-# Dependency to get DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# ==========================================
-# 🚛 LOGISTICS CONTROL (Drivers & Modes)
-# ==========================================
-
-@router.get("/status")
-def get_admin_status(db: Session = Depends(get_db)):
-    """Returns the current Payment Mode and List of Drivers."""
-    # 1. Get Payment Mode
-    mode_setting = db.query(SystemSetting).filter(SystemSetting.key == "payment_mode").first()
-    current_mode = mode_setting.value if mode_setting else "MANUAL"
-
-    # 2. Get Drivers
-    drivers = db.query(Driver).all()
+@router.get("/dashboard-stats")
+def get_dashboard_stats(db: Session = Depends(get_db)):
+    """
+    The Brain of the Admin Panel. 
+    Calculates Real-Time Financials and Operations data.
+    """
     
-    return {"mode": current_mode, "drivers": drivers}
-
-@router.post("/toggle-mode")
-def toggle_payment_mode(db: Session = Depends(get_db)):
-    """Switches between MANUAL (Cash) and GATEWAY (Paystack)."""
-    setting = db.query(SystemSetting).filter(SystemSetting.key == "payment_mode").first()
+    # 1. FINANCIALS (The Money)
+    # Sum of all CONFIRMED orders
+    total_sales = db.query(func.sum(Order.amount_paid)).filter(Order.status == OrderStatus.CONFIRMED).scalar() or 0.0
     
-    if not setting:
-        setting = SystemSetting(key="payment_mode", value="MANUAL")
-        db.add(setting)
+    # Revenue Split
+    platform_revenue = total_sales * 0.05  # Your 5%
+    agent_payouts = total_sales * 0.10     # Their 10%
+    client_payouts = total_sales * 0.85    # Owner's 85%
     
-    # Flip the switch
-    if setting.value == "MANUAL":
-        setting.value = "GATEWAY"
-    else:
-        setting.value = "MANUAL"
-        
-    db.commit()
-    return {"status": "success", "new_mode": setting.value}
+    # 2. OPERATIONAL HEALTH
+    pending_orders = db.query(Order).filter(Order.status == OrderStatus.PENDING_CONFIRMATION).count()
+    active_listings = db.query(Item).filter(Item.is_sold == False).count()
+    
+    # 3. AGENT NETWORK
+    total_agents = db.query(User).filter(User.role == UserRole.AGENT).count()
+    
+    # 4. RECENT ACTIVITY FEED (Last 5 Orders)
+    recent_orders = db.query(Order).order_by(Order.created_at.desc()).limit(5).all()
+    
+    # Format the feed for the UI
+    activity_feed = []
+    for o in recent_orders:
+        activity_feed.append({
+            "id": o.id,
+            "item": o.item.title,
+            "amount": o.amount_paid,
+            "status": o.status,
+            "buyer": o.buyer.full_name,
+            "date": o.created_at.strftime("%H:%M %d/%m")
+        })
 
-@router.post("/reset-drivers")
-def reset_all_drivers(db: Session = Depends(get_db)):
-    """Emergency Button: Sets all drivers to AVAILABLE."""
-    drivers = db.query(Driver).all()
-    for d in drivers:
-        d.status = "AVAILABLE"
-    db.commit()
-    return {"status": "success", "message": "All drivers reset to AVAILABLE"}
+    return {
+        "financials": {
+            "gross_volume": total_sales,
+            "net_revenue": platform_revenue,
+            "agent_commissions": agent_payouts,
+            "pending_payouts": client_payouts
+        },
+        "operations": {
+            "pending_orders": pending_orders,
+            "active_listings": active_listings,
+            "total_agents": total_agents
+        },
+        "feed": activity_feed
+    }
 
-
-# ==========================================
-# 🛍️ MARKETPLACE TOOLS (Seeding & Tests)
-# ==========================================
+# --- LEGACY DRIVER MANAGEMENT (Kept as a utility) ---
+@router.get("/drivers")
+def get_drivers(db: Session = Depends(get_db)):
+    return db.query(Driver).all()
 
 @router.get("/seed-market-users")
 def seed_market_users(db: Session = Depends(get_db)):
-    """
-    Creates test users for the Marketplace (Bisi & Ayo).
-    Run this once after deployment to populate the database.
-    """
-    # Check if Bisi already exists
-    if not db.query(User).filter(User.email == "bisi@example.com").first():
-        # Create Seller (B)
-        seller = User(
-            full_name="Bisi Seller",
-            phone="08099999999",
-            email="bisi@example.com",
-            address="123 Allen Avenue, Ikeja"
-        )
-        # Create Buyer (A)
-        buyer = User(
-            full_name="Ayo Buyer",
-            phone="08055555555",
-            email="ayo@example.com",
-            address="456 Victoria Island, Lagos"
-        )
-        
-        db.add(seller)
-        db.add(buyer)
-        db.commit()
-        return {"status": "Success", "message": "Created Bisi (Seller) and Ayo (Buyer)"}
-    
-    return {"status": "Info", "message": "Users already exist."}
+    """Quick tool to create test accounts if database was wiped."""
+    if not db.query(User).filter(User.email == "agent@fliptrybe.com").first():
+        agent = User(full_name="Agent Chidi", phone="080AGENT001", role=UserRole.AGENT, email="agent@fliptrybe.com")
+        buyer = User(full_name="Tunde Buyer", phone="080BUYER001", role=UserRole.USER, email="buyer@fliptry
