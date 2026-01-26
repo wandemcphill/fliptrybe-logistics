@@ -3,20 +3,13 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 
-from app.database import SessionLocal
+from app.database import get_db  # Ensure this is imported!
 from app.models import Item, User, Order, ItemStatus, OrderStatus
 from app.notifications import notify_parties_of_sale
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# --- INPUT SCHEMAS (Data Validation) ---
+# --- INPUT SCHEMAS ---
 class ItemCreate(BaseModel):
     title: str
     description: str
@@ -26,7 +19,7 @@ class ItemCreate(BaseModel):
     pickup_days: str
     pickup_contact_name: str
     pickup_contact_phone: str
-    seller_id: int # In real app, this comes from logged-in session
+    seller_id: int 
 
 class PurchaseRequest(BaseModel):
     buyer_id: int
@@ -36,9 +29,16 @@ class PurchaseRequest(BaseModel):
 
 # --- API ROUTES ---
 
+# 👇 THIS WAS THE MISSING PART
+@router.get("/items")
+def get_items(db: Session = Depends(get_db)):
+    """Fetch all available items for the feed."""
+    # We filter by status so sold items disappear from the feed
+    return db.query(Item).filter(Item.status == ItemStatus.AVAILABLE).all()
+
 @router.post("/list-item")
 def list_item(item: ItemCreate, db: Session = Depends(get_db)):
-    """Seller lists an item. Address is mandatory."""
+    """Seller lists an item."""
     new_item = Item(
         title=item.title,
         description=item.description,
@@ -58,25 +58,19 @@ def list_item(item: ItemCreate, db: Session = Depends(get_db)):
 
 @router.post("/buy-item")
 def buy_item(request: PurchaseRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    """
-    Buyer purchases item.
-    1. Validate Item is available.
-    2. Process Payment (Mocked here).
-    3. Update DB.
-    4. Trigger Async Notifications.
-    """
+    """Buyer purchases item."""
     
     # 1. Check Item
     item = db.query(Item).filter(Item.id == request.item_id).first()
     if not item or item.status != ItemStatus.AVAILABLE:
         raise HTTPException(status_code=400, detail="Item is no longer available.")
     
-    # 2. Get Buyer & Seller Info
+    # 2. Get Buyer
     buyer = db.query(User).filter(User.id == request.buyer_id).first()
     if not buyer:
         raise HTTPException(status_code=404, detail="Buyer not found")
         
-    # 3. Create Order (Record the Transaction)
+    # 3. Create Order
     new_order = Order(
         buyer_id=buyer.id,
         item_id=item.id,
@@ -92,9 +86,7 @@ def buy_item(request: PurchaseRequest, background_tasks: BackgroundTasks, db: Se
     db.add(new_order)
     db.commit()
     
-    # 5. TRIGGER NOTIFICATIONS (Background Task)
-    # We use background_tasks so the user gets a fast response 
-    # while the server sends messages in the background.
+    # 5. Notify
     pickup_data = {
         "contact_name": item.pickup_contact_name,
         "contact_phone": item.pickup_contact_phone,
@@ -106,10 +98,10 @@ def buy_item(request: PurchaseRequest, background_tasks: BackgroundTasks, db: Se
         notify_parties_of_sale,
         buyer_phone=buyer.phone,
         buyer_name=buyer.full_name,
-        seller_phone=item.pickup_contact_phone, # Notify the pickup contact
+        seller_phone=item.pickup_contact_phone,
         seller_name=item.pickup_contact_name,
         item_title=item.title,
         pickup_details=pickup_data
     )
     
-    return {"status": "success", "message": "Payment confirmed. Check your WhatsApp for details."}
+    return {"status": "success", "message": "Payment confirmed."}
