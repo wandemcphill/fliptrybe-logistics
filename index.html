@@ -9,8 +9,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }</script>
     <style>
-        /* Fallback image if video fails */
-        .hero-bg { background: #000; }
+        /* 1. THE FALLBACK IMAGE (Visible immediately) */
+        .hero-bg {
+            background-image: url('https://images.unsplash.com/photo-1616401784845-180882ba9ba8?q=80&w=2670&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: center;
+            background-color: #1a1a1a; /* Dark gray fallback */
+        }
         .glass-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
@@ -18,12 +23,13 @@
 
     <div class="relative h-screen overflow-hidden hero-bg">
         
-        <video autoplay muted loop playsinline class="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-60">
+        <video autoplay muted loop playsinline 
+            poster="https://images.unsplash.com/photo-1616401784845-180882ba9ba8?q=80&w=2670"
+            class="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-80">
             <source src="https://assets.mixkit.co/videos/preview/mixkit-delivery-man-giving-a-package-to-a-woman-3323-large.mp4" type="video/mp4">
-            Your browser does not support the video tag.
         </video>
 
-        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/70 via-black/40 to-black/80 z-0"></div>
+        <div class="absolute top-0 left-0 w-full h-full bg-black/60 z-0"></div>
 
         <div class="relative z-10 h-full flex flex-col justify-between px-6 py-8">
             
@@ -101,7 +107,7 @@
                 <a href="/driver-app" class="group p-8 rounded-[2.5rem] bg-gray-50 border border-gray-100 hover:shadow-2xl hover:bg-green-600 hover:text-white transition duration-500">
                     <div class="w-14 h-14 bg-gray-200 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:bg-white/20 group-hover:text-white">🚚</div>
                     <h3 class="text-xl font-bold mb-2">Logistics</h3>
-                    <p class="text-gray-500 text-sm group-hover:text-gray-300">Fast delivery network.</p>
+                    <p class="text-gray-500 text-sm group-hover:text-gray-300">Fast delivery network for all your Flip Trybe purchases.</p>
                 </a>
             </div>
         </div>
