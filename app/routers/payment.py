@@ -88,7 +88,7 @@ def initiate_payment(order: OrderRequest, db: Session = Depends(get_db)):
             "email": order.buyer_email,
             "amount": amount_kobo,
             "reference": str(uuid.uuid4()),
-            "callback_url": "http://localhost:8000/success", # Redirects here after paying
+            "callback_url": "https://fliptrybe-app.onrender.com/success", # Redirects here after paying
             "metadata": {
                 "vehicle_type": order.vehicle_type,
                 "driver_id": driver.id
