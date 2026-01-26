@@ -15,7 +15,9 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     
     # 1. FINANCIALS (The Money)
     # Sum of all CONFIRMED orders
-    total_sales = db.query(func.sum(Order.amount_paid)).filter(Order.status == OrderStatus.CONFIRMED).scalar() or 0.0
+    total_sales = db.query(func.sum(Order.amount_paid)).filter(
+        Order.status == OrderStatus.CONFIRMED
+    ).scalar() or 0.0
     
     # Revenue Split
     platform_revenue = total_sales * 0.05  # Your 5%
@@ -23,14 +25,19 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     client_payouts = total_sales * 0.85    # Owner's 85%
     
     # 2. OPERATIONAL HEALTH
-    pending_orders = db.query(Order).filter(Order.status == OrderStatus.PENDING_CONFIRMATION).count()
+    pending_orders = db.query(Order).filter(
+        Order.status == OrderStatus.PENDING_CONFIRMATION
+    ).count()
+    
     active_listings = db.query(Item).filter(Item.is_sold == False).count()
     
     # 3. AGENT NETWORK
     total_agents = db.query(User).filter(User.role == UserRole.AGENT).count()
     
     # 4. RECENT ACTIVITY FEED (Last 5 Orders)
-    recent_orders = db.query(Order).order_by(Order.created_at.desc()).limit(5).all()
+    recent_orders = db.query(Order).order_by(
+        Order.created_at.desc()
+    ).limit(5).all()
     
     # Format the feed for the UI
     activity_feed = []
@@ -59,7 +66,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
         "feed": activity_feed
     }
 
-# --- LEGACY DRIVER MANAGEMENT (Kept as a utility) ---
+# --- LEGACY DRIVER MANAGEMENT ---
 @router.get("/drivers")
 def get_drivers(db: Session = Depends(get_db)):
     return db.query(Driver).all()
@@ -67,6 +74,27 @@ def get_drivers(db: Session = Depends(get_db)):
 @router.get("/seed-market-users")
 def seed_market_users(db: Session = Depends(get_db)):
     """Quick tool to create test accounts if database was wiped."""
+    
+    # Check for agent
     if not db.query(User).filter(User.email == "agent@fliptrybe.com").first():
-        agent = User(full_name="Agent Chidi", phone="080AGENT001", role=UserRole.AGENT, email="agent@fliptrybe.com")
-        buyer = User(full_name="Tunde Buyer", phone="080BUYER001", role=UserRole.USER, email="buyer@fliptry
+        agent = User(
+            full_name="Agent Chidi", 
+            phone="080AGENT001", 
+            role=UserRole.AGENT, 
+            email="agent@fliptrybe.com"
+        )
+        
+        # Check for buyer - I BROKE THIS INTO LINES TO PREVENT ERRORS
+        buyer = User(
+            full_name="Tunde Buyer", 
+            phone="080BUYER001", 
+            role=UserRole.USER, 
+            email="buyer@fliptrybe.com"
+        )
+        
+        db.add(agent)
+        db.add(buyer)
+        db.commit()
+        return {"status": "Success", "message": "Users Created"}
+        
+    return {"status": "Info", "message": "Users exist"}
