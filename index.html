@@ -9,10 +9,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }</script>
     <style>
-        /* 1. HOSTED BACKGROUND IMAGE (Guaranteed to Load) */
+        /* 1. LOCAL BACKGROUND IMAGE */
         .hero-bg {
-            /* Using a high-quality hosted version of the collage so it never fails */
-            background-image: url('https://i.ibb.co/3k5Q9zL/hero-collage-fixed.jpg'); 
+            /* This points to the file you saved in app/static/ */
+            background-image: url('/static/hero-collage.png'); 
             background-size: cover;
             background-position: center;
             background-color: #1a1a1a; 
@@ -25,11 +25,11 @@
     <div class="relative h-screen overflow-hidden hero-bg">
         
         <video autoplay muted loop playsinline 
-            class="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-20">
+            class="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-30 md:opacity-40">
             <source src="https://assets.mixkit.co/videos/preview/mixkit-delivery-man-giving-a-package-to-a-woman-3323-large.mp4" type="video/mp4">
         </video>
 
-        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/80 via-black/50 to-black/90 z-0"></div>
+        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/80 via-black/60 to-black/90 z-0"></div>
 
         <div class="relative z-10 h-full flex flex-col justify-between px-6 py-8">
             
