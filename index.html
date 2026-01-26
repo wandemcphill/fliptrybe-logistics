@@ -10,12 +10,13 @@
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }</script>
     <style>
         .hero-bg {
-            /* ⚠️ USING PUBLIC URL TO FIX BLACK SCREEN */
-            background-image: url('https://images.unsplash.com/photo-1620917670396-857e4369e46a?q=80&w=2669&auto=format&fit=crop'); 
+            /* YOUR CUSTOM HOSTED IMAGE */
+            background-image: url('https://i.postimg.cc/Kz74nMCW/bg.png'); 
+            
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-color: #222; /* Fallback Dark Grey */
+            background-color: #1e3a8a; /* Fallback Blue */
         }
         .glass-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
     </style>
@@ -24,7 +25,7 @@
 
     <div class="relative h-screen overflow-hidden hero-bg">
         
-        <div class="absolute top-0 left-0 w-full h-full bg-black/60 z-0"></div>
+        <div class="absolute top-0 left-0 w-full h-full bg-black/50 z-0"></div>
 
         <div class="relative z-10 h-full flex flex-col justify-between px-6 py-8">
             
