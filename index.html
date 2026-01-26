@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlipTrybe Logistics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* If this loads, your button will be BLUE */
+        :root { --primary: #2563EB; --bg: #F3F4F6; }
+        
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 20px; display: flex; justify-content: center; }
+        .booking-card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; font-size: 22px; color: #111; margin-bottom: 5px; }
+        p.sub { text-align: center; color: #666; margin-top: 0; font-size: 14px; }
+        
+        label { display: block; margin-top: 15px; font-weight: 600; color: #333; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        
+        .total-box { background: #eff6ff; border: 1px dashed #bfdbfe; padding: 15px; margin-top: 20px; border-radius: 8px; text-align: center; }
+        .total-box h2 { color: var(--primary); margin: 0; font-size: 28px; }
+        
+        /* THE BLUE BUTTON */
+        .btn-submit { 
+            width: 100%; 
+            background-color: var(--primary); 
+            color: white; 
+            padding: 16px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            margin-top: 20px; 
+            cursor: pointer; 
+        }
+        .btn-submit:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+<div class="booking-card">
+    <h1>FlipTrybe Logistics</h1>
+    <p class="sub">Secure Dispatch & Delivery</p>
+
+    <label>Pickup Name</label>
+    <input type="text" id="buyerName" value="Opeyemi">
+
+    <label>Select Vehicle</label>
+    <select id="vehicleType" onchange="calculatePrice()">
+        <option value="Bike">Dispatch Bike (₦100/km)</option>
+        <option value="Van">Cargo Van (₦500/km)</option>
+    </select>
+
+    <label>Distance (km)</label>
+    <input type="number" id="distance" value="10" oninput="calculatePrice()">
+
+    <div class="total-box">
+        <span>Estimated Total</span>
+        <h2 id="displayPrice">₦5,000</h2>
+    </div>
+
+    <button class="btn-submit" onclick="startOrder()">Confirm Booking</button>
+</div>
+
+<script>
+    const RATES = { "Bike": 100, "Van": 500 };
+
+    function calculatePrice() {
+        const vehicle = document.getElementById('vehicleType').value;
+        const dist = document.getElementById('distance').value;
+        const total = (dist || 0) * RATES[vehicle];
+        document.getElementById('displayPrice').innerText = '₦' + total.toLocaleString();
+    }
+
+    async function startOrder() {
+        // 1. VISUAL CONFIRMATION: Show an alert so we know the click worked
+        // alert("Processing Order..."); 
+
+        const name = document.getElementById('buyerName').value;
+        const vehicle = document.getElementById('vehicleType').value;
+        const distRaw = document.getElementById('distance').value;
+
+        // 2. THE FIX: Parse it as a number
+        const distance = parseFloat(distRaw);
+
+        const orderData = {
+            buyer_email: "guest@fliptrybe.com",
+            vehicle_type: vehicle,
+            distance_km: distance // This is now a Number!
+        };
+
+        try {
+            const response = await fetch('/api/payment/initiate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                window.location.href = result.payment_mode;
+            } else {
+                alert("Server Error: " + JSON.stringify(result));
+            }
+        } catch (error) {
+            alert("Connection Failed. Check Terminal.");
+        }
+    }
+</script>
+
+</body>
+</html>

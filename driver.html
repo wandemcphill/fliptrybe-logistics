@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FlipTrybe Driver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* INDUSTRY STANDARD DARK MODE UI */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #111827; /* Deep Charcoal */
+            color: white; 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+        }
+
+        .app-container {
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* LOGIN SCREEN */
+        .card {
+            background: #1F2937;
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 { margin-bottom: 10px; font-size: 24px; }
+        p.sub { color: #9CA3AF; margin-bottom: 30px; }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid #374151;
+            background: #111827;
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus { border-color: #2563EB; }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            margin-top: 20px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .btn-primary { background: #2563EB; color: white; }
+        .btn-primary:active { transform: scale(0.98); }
+
+        /* DASHBOARD STATUS INDICATOR */
+        .status-ring {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 8px solid;
+            transition: all 0.3s ease;
+        }
+
+        /* STATE: ONLINE (Green) */
+        .ONLINE {
+            border-color: #10B981;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+        }
+        .ONLINE .label { color: #10B981; }
+
+        /* STATE: BUSY (Red) */
+        .BUSY {
+            border-color: #EF4444;
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
+            animation: pulse 1.5s infinite;
+        }
+        .BUSY .label { color: #EF4444; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .label { font-size: 20px; font-weight: 800; letter-spacing: 1px; }
+        .sub-label { color: #9CA3AF; font-size: 14px; margin-top: 5px; }
+
+        .hidden { display: none !important; }
+        
+        .btn-complete { background: #EF4444; color: white; }
+        .btn-logout { background: transparent; color: #6B7280; margin-top: 20px; text-decoration: underline; cursor: pointer; border: none;}
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen" class="app-container">
+        <div class="card">
+            <h1>🚚 Driver Access</h1>
+            <p class="sub">Enter your verified phone number</p>
+            
+            <input type="tel" id="phone" placeholder="080..." value="08022222222">
+            
+            <button class="btn btn-primary" onclick="login()">SECURE LOGIN</button>
+            <p id="errorMsg" style="color: #EF4444; margin-top: 15px; display: none;"></p>
+        </div>
+    </div>
+
+    <div id="dashboardScreen" class="app-container hidden">
+        <h2 id="welcomeText" style="margin-bottom: 40px;">Welcome</h2>
+
+        <div id="statusRing" class="status-ring ONLINE">
+            <span class="label" id="statusLabel">ONLINE</span>
+            <span class="sub-label" id="statusSub">Waiting for orders...</span>
+        </div>
+
+        <button id="actionBtn" class="btn btn-primary hidden" onclick="completeJob()">
+            ✅ COMPLETE DELIVERY
+        </button>
+
+        <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+
+    <script>
+        let driverId = null;
+        let pollInterval = null;
+
+        // 1. LOGIN LOGIC
+        async function login() {
+            const phone = document.getElementById('phone').value.trim();
+            const errorEl = document.getElementById('errorMsg');
+            
+            // Basic UI Feedback
+            errorEl.style.display = 'none';
+            
+            try {
+                // We use the query parameter format that matches your backend
+                const response = await fetch(`/api/driver/login?phone=${phone}`, { method: 'POST' });
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.detail || "Login failed");
+
+                // Success!
+                driverId = data.driver_id;
+                document.getElementById('welcomeText').innerText = `👋 ${data.name}`;
+                
+                // Switch Screens
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('dashboardScreen').classList.remove('hidden');
+
+                // Start the "Heartbeat" (Check for new jobs every 2 seconds)
+                checkStatus();
+                pollInterval = setInterval(checkStatus, 2000);
+
+            } catch (err) {
+                errorEl.innerText = "❌ Login Failed: Number not found.";
+                errorEl.style.display = 'block';
+            }
+        }
+
+        // 2. STATUS CHECKER (The Heartbeat)
+        async function checkStatus() {
+            if (!driverId) return;
+
+            const res = await fetch(`/api/driver/status/${driverId}`);
+            const data = await res.json();
+            
+            updateUI(data.status);
+        }
+
+        // 3. UI UPDATER
+        function updateUI(status) {
+            const ring = document.getElementById('statusRing');
+            const label = document.getElementById('statusLabel');
+            const sub = document.getElementById('statusSub');
+            const btn = document.getElementById('actionBtn');
+
+            if (status === 'BUSY') {
+                // RIDE IN PROGRESS MODE
+                ring.className = 'status-ring BUSY';
+                label.innerText = 'ON TRIP';
+                sub.innerText = 'Drive safely to destination';
+                
+                // Show Complete Button
+                btn.classList.remove('hidden');
+                btn.className = 'btn btn-complete';
+            } else {
+                // WAITING MODE
+                ring.className = 'status-ring ONLINE';
+                label.innerText = 'ONLINE';
+                sub.innerText = 'Searching for riders...';
+                
+                // Hide Complete Button
+                btn.classList.add('hidden');
+            }
+        }
+
+        // 4. COMPLETE JOB LOGIC
+        async function completeJob() {
+            if (!confirm("Confirm you have reached the destination?")) return;
+
+            await fetch(`/api/driver/${driverId}/status?status=AVAILABLE`, { method: 'POST' });
+            
+            // Instant UI update so they don't have to wait for the next heartbeat
+            updateUI('AVAILABLE');
+        }
+
+        function logout() {
+            clearInterval(pollInterval);
+            location.reload();
+        }
+    </script>
+</body>
+</html>
