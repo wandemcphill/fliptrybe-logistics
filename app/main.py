@@ -6,18 +6,18 @@ import os
 
 from app.database import engine, Base, SessionLocal
 from app.models import Driver, SystemSetting
-# ⚠️ THESE IMPORTS ARE CRITICAL. IF THEY FAIL, CHECK YOUR FOLDER STRUCTURE.
-from app.routers import payment, driver, admin
+# ⚠️ IMPORT ALL ROUTERS HERE
+from app.routers import payment, driver, admin, market
 
-# --- 1. SYSTEM STARTUP (The "Hiring" Phase) ---
+# --- 1. SYSTEM STARTUP ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 FlipTrybe Server Starting Up...")
     Base.metadata.create_all(bind=engine)
     
+    # HIRE DRIVERS (Legacy Logic)
     db = SessionLocal()
     try:
-        # HIRE DRIVERS (If they don't exist)
         team = [
             {"name": "Musa (Bike)", "phone": "08011111111", "vehicle": "Bike"},
             {"name": "Chinedu (Van)", "phone": "08022222222", "vehicle": "Van"},
@@ -40,18 +40,17 @@ async def lifespan(app: FastAPI):
             db.add(SystemSetting(key="payment_mode", value="MANUAL"))
             
         db.commit()
-        print("✅ Database Synchronized. Staff is Ready.")
     except Exception as e:
         print(f"❌ Startup Error: {e}")
     finally:
         db.close()
         
-    yield # Server runs here
+    yield 
     print("🛑 Server Shutting Down...")
 
 app = FastAPI(lifespan=lifespan)
 
-# --- 2. SECURITY (Allow Phone & Browser Access) ---
+# --- 2. SECURITY ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -60,18 +59,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- 3. CONNECTING THE WIRES (Routers) ---
-# This is where we plug in the files you wrote earlier
+# --- 3. CONNECT THE ROUTERS (The Missing Link) ---
 app.include_router(payment.router, prefix="/api/payment", tags=["Payment"])
 app.include_router(driver.router, prefix="/api/driver", tags=["Driver"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+# 👇 THIS LINE WAS LIKELY MISSING
+app.include_router(market.router, prefix="/api/market", tags=["Marketplace"])
 
 # --- 4. FRONTEND PAGE SERVING ---
 def serve_file(filename: str):
     path = os.path.join(os.getcwd(), filename)
     if os.path.exists(path):
         return FileResponse(path)
-    return {"error": f"File '{filename}' not found. Make sure it is in the FlipTrybe folder."}
+    return {"error": f"File '{filename}' not found"}
 
 @app.get("/")
 def home(): return serve_file("index.html")
