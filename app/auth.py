@@ -33,7 +33,7 @@ def login():
 
     return render_template('login.html')
 
-@auth.route('/register', methods=['GET', 'POST']) # Changed from 'signup' to 'register' to match your links
+@auth.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -67,7 +67,8 @@ def register():
         flash('Account created! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('register.html')
+    # ✅ FIXED: Changed 'register.html' to 'signup.html' to match your file
+    return render_template('signup.html')
 
 @auth.route('/logout')
 @login_required
