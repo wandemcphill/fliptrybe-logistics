@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-7xl mx-auto py-12 px-6">
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Gross Volume</p>
+            <h2 class="text-3xl font-black">₦{{ "{:,.0f}".format(stats.gross_volume) }}</h2> [cite: 43]
+        </div>
+        
+        <div class="bg-indigo-50 p-8 rounded-[2.5rem] shadow-sm border border-indigo-100">
+            <p class="text-[10px] font-black uppercase text-indigo-600 mb-2">Net Revenue (5%)</p>
+            <h2 class="text-3xl font-black text-indigo-700">₦{{ "{:,.0f}".format(stats.net_revenue) }}</h2> [cite: 43]
+        </div>
+
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Total Tribe</p>
+            <h2 class="text-3xl font-black">{{ stats.user_count }}</h2> [cite: 44]
+        </div>
+        
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Pending Tasks</p>
+            <h2 class="text-3xl font-black text-orange-500">{{ stats.pending_tasks }}</h2> [cite: 45]
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-10">
+        <div class="lg:col-span-2 bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-8 border-b font-bold text-xl flex justify-between items-center">
+                Live Transaction Feed [cite: 45]
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Live Updates</span> [cite: 46]
+                </span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50/50">
+                        <tr class="text-[10px] uppercase font-black text-gray-400">
+                            <th class="p-6">Asset</th> [cite: 47]
+                            <th class="p-6">Buyer</th> [cite: 48]
+                            <th class="p-6">Total Paid</th> [cite: 48]
+                            <th class="p-6 text-right">Status</th> [cite: 48]
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for order in orders %}
+                        <tr class="text-sm hover:bg-gray-50/50 transition">
+                            <td class="p-6 font-bold">{{ order.listing.title }}</td> [cite: 50]
+                            <td class="p-6">{{ order.buyer.name }}</td> [cite: 50]
+                            <td class="p-6 font-black">₦{{ "{:,.0f}".format(order.total_price) }}</td> [cite: 51]
+                            <td class="p-6 text-right">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase 
+                                    {% if order.delivery_status == 'Delivered' %}bg-green-100 text-green-700
+                                    {% elif order.delivery_status == 'Flagged' %}bg-red-100 text-red-700
+                                    {% else %}bg-orange-100 text-orange-700{% endif %}"> 
+                                    {{ order.delivery_status }} [cite: 53]
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-gray-900 text-white rounded-[3rem] p-8 shadow-2xl">
+            <h3 class="font-bold text-xl mb-6">The Tribe</h3> [cite: 54]
+            <form action="{{ url_for('admin.dashboard') }}" method="GET" class="mb-8"> [cite: 54]
+                <div class="relative">
+                    <input type="text" name="user_q" placeholder="Search members..." 
+                           [cite_start]class="w-full bg-white/10 border-none rounded-2xl py-3 px-4 text-white outline-none"> [cite: 55]
+                </div>
+            </form>
+            <div class="space-y-6">
+                {% for user in users %}
+                <div class="flex items-center justify-between border-b border-white/10 pb-4 last:border-0">
+                    <div>
+                        <p class="font-bold text-sm">{{ user.name }}</p> [cite: 57]
+                        <p class="text-[9px] text-gray-500 uppercase tracking-widest">
+                            {% if user.is_admin %}Admin{% elif user.is_agent %}Agent{% elif user.is_driver %}Driver{% else %}Buyer{% endif %} [cite: 58]
+                        </p>
+                    </div>
+                    <p class="text-[10px] font-black text-green-400">₦{{ "{:,.0f}".format(user.wallet_balance) }}</p> [cite: 59]
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-16">
+        <h3 class="text-2xl font-black text-gray-900 mb-8">Dispute Resolution</h3> [cite: 60]
+        <div class="grid gap-6">
+            {% for d in disputes %}
+            <div class="bg-white p-8 rounded-[3rem] border border-red-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="max-w-xl">
+                    <span class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">{{ d.reason }}</span> [cite: 61]
+                    <h4 class="text-lg font-bold text-gray-900 mt-2">Order #{{ d.order_id }} • Ticket by {{ d.user.name }}</h4> [cite: 61]
+                    <p class="text-sm text-gray-400 mt-2 italic">"{{ d.details }}"</p> [cite: 61]
+                </div>
+                <div class="flex gap-4">
+                    <form action="{{ url_for('admin.resolve', dispute_id=d.id) }}" method="POST"> [cite: 62]
+                        <button type="submit" class="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase hover:bg-black transition">
+                            Release Funds [cite: 63]
+                        </button>
+                    </form>
+                    <form action="{{ url_for('admin.refund', dispute_id=d.id) }}" method="POST"> [cite: 63]
+                        <button type="submit" class="bg-red-50 text-red-600 px-8 py-4 rounded-2xl font-black text-[10px] uppercase hover:bg-red-100 transition">
+                            Issue Refund [cite: 64]
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="py-20 text-center bg-gray-50 rounded-[4rem] border-2 border-dashed border-gray-100">
+                <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">No active disputes in the Tribe.</p> [cite: 65]
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

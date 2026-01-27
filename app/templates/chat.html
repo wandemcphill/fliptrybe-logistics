@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8 h-[calc(100vh-100px)] flex flex-col">
+    
+    <div class="bg-white border border-gray-100 p-4 rounded-t-3xl flex items-center justify-between shadow-sm z-10">
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('main.inbox') }}" class="text-gray-400 hover:text-black">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                {% if partner.profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/' + partner.profile_pic) }}" class="w-full h-full object-cover">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center">👤</div>
+                {% endif %}
+            </div>
+            <div>
+                <h2 class="font-bold text-sm leading-tight">{{ partner.name }}</h2>
+                <p class="text-[10px] text-green-500 font-black uppercase tracking-widest">Online</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-grow bg-gray-50 p-4 overflow-y-auto space-y-4 border-x border-gray-100" id="chat-container">
+        {% for msg in messages %}
+            {% if msg.sender_id == current_user.id %}
+            <div class="flex justify-end">
+                <div class="bg-black text-white px-5 py-3 rounded-2xl rounded-tr-sm max-w-[80%] text-sm">
+                    {{ msg.body }}
+                </div>
+            </div>
+            {% else %}
+            <div class="flex justify-start">
+                <div class="bg-white border border-gray-200 px-5 py-3 rounded-2xl rounded-tl-sm max-w-[80%] text-sm shadow-sm">
+                    {{ msg.body }}
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="bg-white border border-gray-100 p-4 rounded-b-3xl shadow-lg">
+        <form action="{{ url_for('main.chat', user_id=partner.id) }}" method="POST" class="flex gap-2">
+            <input type="text" name="message" placeholder="Type a message..." required autocomplete="off" autofocus
+                   class="flex-grow bg-gray-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-black outline-none transition">
+            <button class="bg-black text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-gray-800 transition">
+                <i class="fas fa-paper-plane text-sm"></i>
+            </button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+    // Auto-scroll to bottom
+    const container = document.getElementById('chat-container');
+    container.scrollTop = container.scrollHeight;
+</script>
+{% endblock %}

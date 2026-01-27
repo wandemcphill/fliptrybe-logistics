@@ -1,118 +1,79 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Enum, Text
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from app.database import Base
-import enum
+import os
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from datetime import datetime
 
-# --- ENUMS ---
-class UserRole(str, enum.Enum):
-    USER = "USER"
-    AGENT = "AGENT"
-    ADMIN = "ADMIN"
+db = SQLAlchemy()
 
-class ItemCategory(str, enum.Enum):
-    DECLUTTER = "DECLUTTER"
-    SHORTLET = "SHORTLET"
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(20), nullable=True) 
+    
+    # 🚐 LOGISTICS & TRUST SCHEMA
+    vehicle_type = db.Column(db.String(50), nullable=True)
+    vehicle_year = db.Column(db.String(10), nullable=True)
+    vehicle_color = db.Column(db.String(20), nullable=True)
+    license_plate = db.Column(db.String(20), nullable=True)
+    rating = db.Column(db.Float, default=5.0)
+    profile_pic = db.Column(db.String(200), nullable=True)
+    
+    wallet_balance = db.Column(db.Float, default=0.0)
+    is_admin = db.Column(db.Boolean, default=False)
+    is_agent = db.Column(db.Boolean, default=False)
+    is_driver = db.Column(db.Boolean, default=False)
 
-class OrderStatus(str, enum.Enum):
-    PENDING_CONFIRMATION = "PENDING_CONFIRMATION"
-    CONFIRMED = "CONFIRMED"
-    CANCELLED_BY_SELLER = "CANCELLED_BY_SELLER"
-    COMPLETED = "COMPLETED"
+    # Relationships
+    listings = db.relationship('Listing', backref='agent', lazy=True)
+    orders_bought = db.relationship('Order', backref='buyer', lazy=True, foreign_keys='Order.buyer_id')
+    orders_delivered = db.relationship('Order', backref='driver', lazy=True, foreign_keys='Order.driver_id')
+    
+    # 💬 CHAT RELATIONSHIPS (NEW)
+    messages_sent = db.relationship('Message', foreign_keys='Message.sender_id', backref='sender', lazy=True)
+    messages_received = db.relationship('Message', foreign_keys='Message.receiver_id', backref='receiver', lazy=True)
 
-class WithdrawalStatus(str, enum.Enum):
-    PENDING = "PENDING"
-    PROCESSED = "PROCESSED"
+class Listing(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    price = db.Column(db.Float, nullable=False)
+    category = db.Column(db.String(50)) 
+    state = db.Column(db.String(100))
+    city = db.Column(db.String(100))
+    image_filename = db.Column(db.String(200))
+    status = db.Column(db.String(20), default='Available')
+    agent_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    orders = db.relationship('Order', backref='listing', lazy=True)
 
-# --- USERS ---
-class User(Base):
-    __tablename__ = "users"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    full_name = Column(String, nullable=False)
-    phone = Column(String, unique=True, index=True)
-    role = Column(Enum(UserRole), default=UserRole.USER)
-    
-    # 📍 LOCATION & RANK
-    state = Column(String, default="Lagos")
-    city = Column(String, default="Ikeja")
-    rating = Column(Float, default=3.0)
-    
-    # 💰 WALLET (The Agent's Bank)
-    wallet_balance = Column(Float, default=0.0)
-    bank_name = Column(String, nullable=True)
-    account_number = Column(String, nullable=True)
-    
-    items = relationship("Item", back_populates="lister")
-    orders = relationship("Order", back_populates="buyer")
-    withdrawals = relationship("Withdrawal", back_populates="agent")
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_date = db.Column(db.DateTime, default=datetime.utcnow)
+    total_price = db.Column(db.Float, nullable=False)
+    delivery_status = db.Column(db.String(50), default='Pending') 
+    verification_pin = db.Column(db.String(4), nullable=True) 
+    buyer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    listing_id = db.Column(db.Integer, db.ForeignKey('listing.id'), nullable=False)
+    driver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    disputes = db.relationship('Dispute', backref='order', lazy=True)
 
-# --- WITHDRAWALS (New) ---
-class Withdrawal(Base):
-    __tablename__ = "withdrawals"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    agent_id = Column(Integer, ForeignKey("users.id"))
-    
-    amount_requested = Column(Float) # e.g. 100,000
-    fee_platform = Column(Float)     # 5% = 5,000
-    amount_net = Column(Float)       # Sent = 95,000
-    
-    status = Column(Enum(WithdrawalStatus), default=WithdrawalStatus.PENDING)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    agent = relationship("User", back_populates="withdrawals")
+class Dispute(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    reason = db.Column(db.String(200), nullable=False)
+    details = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='Open')
+    is_emergency = db.Column(db.Boolean, default=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref='disputes_filed', lazy=True)
 
-# --- ITEMS ---
-class Item(Base):
-    __tablename__ = "items"
-
-    id = Column(Integer, primary_key=True, index=True)
-    type = Column(Enum(ItemCategory), default=ItemCategory.DECLUTTER)
-    title = Column(String, index=True)
-    description = Text()
-    price = Column(Float)
-    
-    # Location
-    region = Column(String, index=True)
-    city = Column(String, index=True)
-    pickup_address = Column(String)
-    
-    # Client Data
-    client_name = Column(String, nullable=True)
-    client_phone = Column(String, nullable=True)
-    client_pickup_time = Column(String, nullable=True)
-    
-    # Financials
-    commission_agent = Column(Float, default=0.0) # This goes to Wallet
-    commission_platform = Column(Float, default=0.0)
-    payout_amount = Column(Float, default=0.0)
-    
-    is_sold = Column(Boolean, default=False)
-    lister_id = Column(Integer, ForeignKey("users.id"))
-    lister = relationship("User", back_populates="items")
-
-# --- ORDERS ---
-class Order(Base):
-    __tablename__ = "orders"
-    id = Column(Integer, primary_key=True, index=True)
-    buyer_id = Column(Integer, ForeignKey("users.id"))
-    item_id = Column(Integer, ForeignKey("items.id"))
-    amount_paid = Column(Float)
-    refund_account_details = Column(String)
-    status = Column(Enum(OrderStatus), default=OrderStatus.PENDING_CONFIRMATION)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    buyer = relationship("User", back_populates="orders")
-    item = relationship("Item")
-
-# --- UTILS ---
-class Driver(Base):
-    __tablename__ = "drivers"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    status = Column(String)
-class SystemSetting(Base):
-    __tablename__ = "settings"
-    key = Column(String, primary_key=True)
-    value = Column(String)
+# 💬 NEW MESSAGE TABLE
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    read = db.Column(db.Boolean, default=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

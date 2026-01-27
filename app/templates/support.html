@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-16">
+    <div class="text-center mb-16">
+        <h1 class="text-4xl font-black text-gray-900 mb-4">How can we help?</h1>
+        <p class="text-gray-500">Our tribe support team is available 24/7 in Lagos and Abuja.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-12">
+        <div class="bg-white border border-gray-100 p-8 rounded-[3rem] shadow-xl">
+            <h2 class="text-xl font-bold mb-6">Send us a message</h2>
+            <form action="{{ url_for('main.support') }}" method="POST" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-4 mb-2 block">Your Email</label>
+                    <input type="email" name="email" required class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-black outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-4 mb-2 block">Subject</label>
+                    <select name="subject" class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer">
+                        <option>General Inquiry</option>
+                        <option>Payment Issue</option>
+                        <option>Report Fraud</option>
+                        <option>Agent Application</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-4 mb-2 block">Message</label>
+                    <textarea name="message" rows="4" required class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-black outline-none"></textarea>
+                </div>
+                <button class="w-full bg-black text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-800 transition shadow-lg">
+                    Send Ticket
+                </button>
+            </form>
+        </div>
+
+        <div class="flex flex-col justify-center space-y-8">
+            <div class="bg-indigo-50 p-8 rounded-[2rem] border border-indigo-100">
+                <i class="fas fa-envelope text-3xl text-indigo-600 mb-4"></i>
+                <h3 class="font-bold text-lg mb-2">Email Support</h3>
+                <p class="text-gray-600 text-sm mb-4">For urgent inquiries regarding escrow or logistics.</p>
+                <a href="mailto:help@fliptrybe.com" class="text-indigo-600 font-black underline">help@fliptrybe.com</a>
+            </div>
+
+            <div class="bg-green-50 p-8 rounded-[2rem] border border-green-100">
+                <i class="fab fa-whatsapp text-3xl text-green-600 mb-4"></i>
+                <h3 class="font-bold text-lg mb-2">WhatsApp Line</h3>
+                <p class="text-gray-600 text-sm mb-4">Chat with our dispatch team instantly.</p>
+                <a href="#" class="text-green-600 font-black underline">+234 800 FLIP TRYBE</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlipTrybe - Safe Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Urbanist', sans-serif; }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
+    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50 border-b border-gray-100">
+        <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="{{ url_for('main.index') }}" class="text-2xl font-black tracking-tighter flex items-center gap-2">
+                <span class="bg-black text-white px-2 py-1 rounded-lg">F</span> FlipTrybe
+            </a>
+
+            <div class="hidden md:flex items-center gap-6 text-sm font-bold text-gray-600">
+                <a href="{{ url_for('main.market') }}" class="hover:text-black transition">Marketplace</a>
+                
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_agent %}
+                        <a href="{{ url_for('main.agent_office') }}" class="hover:text-black">Agent Office</a>
+                    {% endif %}
+                    
+                    {% if current_user.is_driver %}
+                        <a href="{{ url_for('main.driver_dashboard') }}" class="hover:text-black">Logistics</a>
+                    {% endif %}
+                    
+                    {% if current_user.is_admin %}
+                        <a href="{{ url_for('main.admin_dashboard') }}" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-crown"></i> Admin
+                        </a>
+                    {% endif %}
+
+                    <a href="{{ url_for('main.dashboard') }}" class="bg-black text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition">
+                        My Wallet
+                    </a>
+                    
+                    <a href="{{ url_for('main.inbox') }}" class="text-gray-400 hover:text-black relative" title="Messages">
+                        <i class="fas fa-comment-alt text-lg"></i>
+                    </a>
+
+                    <a href="{{ url_for('main.settings') }}" class="text-gray-400 hover:text-black" title="Settings">
+                        <i class="fas fa-cog text-lg"></i>
+                    </a>
+
+                    <a href="{{ url_for('auth.logout') }}" class="text-gray-400 hover:text-black">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="text-black">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="bg-black text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition">
+                        Join the Tribe
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="pt-24 px-4 max-w-xl mx-auto z-40 relative">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-4 rounded-xl mb-4 text-sm font-bold shadow-lg
+                        {% if category == 'success' %} bg-green-100 text-green-700 border border-green-200
+                        {% else %} bg-red-100 text-red-700 border border-red-200 {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="flex-grow">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="bg-black text-white py-12 mt-12">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <h2 class="text-2xl font-black tracking-tighter mb-4">FlipTrybe.</h2>
+            <p class="text-gray-500 text-sm">Abuja • Lagos • Port Harcourt</p>
+            <p class="text-gray-700 text-xs mt-8">© 2026 FlipTrybe Nigeria Ltd.</p>
+        </div>
+    </footer>
+</body>
+</html>

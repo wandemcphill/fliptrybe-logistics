@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto py-12 px-6">
+    <a href="{{ url_for('main.market') }}" class="inline-flex items-center text-sm font-bold text-gray-500 hover:text-black mb-8 transition">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        Back to Marketplace
+    </a>
+
+    <div class="grid lg:grid-cols-2 gap-12">
+        <div class="rounded-[3rem] overflow-hidden bg-gray-100 shadow-inner h-fit">
+            {% if product.image_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + product.image_filename) }}" 
+                 class="w-full h-auto object-cover min-h-[500px]">
+            {% else %}
+            <div class="min-h-[500px] flex items-center justify-center text-gray-400">
+                <p class="font-bold uppercase text-[10px] tracking-widest">No Image Available</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="flex flex-col justify-center">
+            <div class="mb-6">
+                <span class="bg-indigo-50 text-indigo-600 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest">
+                    {{ product.category }}
+                </span>
+                <h1 class="text-5xl font-extrabold text-gray-900 mt-4">{{ product.title }}</h1>
+            </div>
+
+            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl mb-8 border border-gray-100">
+                <div class="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold text-xl shadow-lg">
+                    {{ (product.agent.name[0] if product.agent.name else 'A') | upper }}
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none">Verified Seller</p>
+                    <p class="text-lg font-bold text-gray-900 leading-tight">{{ product.agent.name or "FlipTrybe Agent" }}</p>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <p class="text-gray-500 text-lg leading-relaxed">{{ product.description }}</p>
+            </div>
+
+            <div class="border-t border-gray-100 pt-8">
+                <div class="flex items-baseline gap-2 mb-8">
+                    <span class="text-4xl font-black text-indigo-600">₦{{ "{:,.2f}".format(product.price) }}</span>
+                    {% if product.category == 'Shortlet' %}
+                    <span class="text-gray-400 font-bold uppercase text-xs tracking-widest">/ Per Night</span>
+                    {% endif %}
+                </div>
+
+                <form action="{{ url_for('main.buy_item', listing_id=product.id) }}" method="POST" class="space-y-6">
+                    
+                    {% if product.category == 'Shortlet' %}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Check-In</label>
+                            <input type="date" name="check_in" required
+                                   class="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Check-Out</label>
+                            <input type="date" name="check_out" required
+                                   class="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if product.status == 'Available' %}
+                        {% if current_user.is_authenticated %}
+                            {% if current_user.id != product.agent_id %}
+                            <button type="submit" class="w-full bg-black text-white py-5 rounded-2xl font-black text-lg hover:scale-[1.02] transition-transform shadow-xl active:scale-95">
+                                {% if product.category == 'Shortlet' %}Confirm Booking{% else %}Buy Now{% endif %}
+                            </button>
+                            <p class="text-center text-[10px] text-gray-400 mt-4 uppercase font-bold tracking-widest">Secure payment via FlipTrybe Wallet</p>
+                            {% else %}
+                            <div class="w-full bg-gray-50 text-gray-400 py-5 rounded-2xl font-black text-center text-sm uppercase tracking-widest border border-gray-100">
+                                This is your listing
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="block text-center w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-indigo-700 transition">
+                                Login to Buy
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <button disabled class="w-full bg-gray-100 text-gray-400 py-5 rounded-2xl font-black text-lg cursor-not-allowed uppercase tracking-widest">
+                            Currently Unavailable
+                        </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-black">
+    <div class="glass-card p-8 rounded-3xl w-full max-w-md border border-white/20">
+        <h2 class="text-3xl font-bold text-white mb-6 text-center">Join the Trybe</h2>
+        
+        <form method="POST" action="{{ url_for('auth.signup') }}">
+            <div class="mb-4">
+                <input type="text" name="name" placeholder="Full Name" required
+                       class="w-full p-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/10 focus:border-white outline-none">
+            </div>
+            <div class="mb-4">
+                <input type="email" name="email" placeholder="Email Address" required
+                       class="w-full p-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/10 focus:border-white outline-none">
+            </div>
+            <div class="mb-4">
+                <input type="password" name="password" placeholder="Password" required
+                       class="w-full p-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/10 focus:border-white outline-none">
+            </div>
+            
+            <div class="flex items-center gap-2 mb-6">
+                <input type="checkbox" name="agent" id="agent" class="w-5 h-5 accent-indigo-500">
+                <label for="agent" class="text-gray-300 text-sm">I want to sell/host (Agent Account)</label>
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-500 hover:scale-105 transition">
+                Sign Up
+            </button>
+        </form>
+        
+        <p class="text-gray-400 text-center mt-4 text-sm">
+            Already have an account? <a href="{{ url_for('auth.login') }}" class="text-white font-bold hover:underline">Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto py-8 px-4">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900">Driver Dashboard</h1>
+            <p class="text-gray-500 text-sm">Welcome back, {{ current_user.name }}</p>
+        </div>
+        <div class="bg-black text-white px-6 py-3 rounded-xl">
+            <div class="text-[10px] uppercase tracking-widest text-gray-400">Total Earnings</div>
+            <div class="text-2xl font-bold">₦{{ current_user.wallet_balance|default(0, true)|round|int }}</div>
+        </div>
+    </div>
+
+    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+        Active Delivery
+    </h2>
+
+    {% if active %}
+        {% for task in active %}
+        <div class="bg-white border-2 border-indigo-600 rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-indigo-600 text-white px-4 py-1 text-xs font-bold rounded-bl-xl">
+                IN PROGRESS
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-2xl font-black text-gray-900 mb-1">{{ task.listing.title }}</h3>
+                    <p class="text-gray-500 text-sm mb-4">📍 Pickup: {{ task.listing.city }}, {{ task.listing.state }}</p>
+                    
+                    <div class="bg-gray-50 p-4 rounded-xl mb-4">
+                        <p class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Customer Info</p>
+                        <p class="font-bold text-gray-900">{{ task.buyer.name }}</p>
+                        <p class="text-indigo-600 font-bold">{{ task.buyer.phone }}</p>
+                        <a href="tel:{{ task.buyer.phone }}" class="text-xs underline mt-1 block">Call Customer</a>
+                    </div>
+                </div>
+
+                <div class="flex flex-col justify-center border-l border-gray-100 pl-8">
+                    
+                    {% if task.delivery_status == 'Assigned' %}
+                        <div class="text-center">
+                            <p class="text-sm text-gray-500 mb-4">Are you at the delivery location?</p>
+                            <form action="{{ url_for('main.mark_arrived', order_id=task.id) }}" method="POST">
+                                <button class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black text-sm hover:bg-indigo-700 transition shadow-lg transform hover:scale-105">
+                                    📍 I HAVE ARRIVED
+                                </button>
+                            </form>
+                        </div>
+
+                    {% elif task.delivery_status == 'Driver Arrived' %}
+                        <div class="bg-yellow-50 p-6 rounded-xl border border-yellow-200">
+                            <p class="text-sm font-bold text-yellow-800 mb-2">Ask Customer for PIN</p>
+                            <form action="{{ url_for('main.complete_task', order_id=task.id) }}" method="POST" class="flex flex-col gap-3">
+                                <input type="text" name="pin" placeholder="Enter 4-Digit PIN" maxlength="4" class="text-center text-2xl font-black tracking-[0.5em] p-3 rounded-lg border-2 border-gray-300 focus:border-black outline-none uppercase" required>
+                                <button class="w-full bg-green-600 text-white py-4 rounded-xl font-black text-sm hover:bg-green-700 transition shadow-lg">
+                                    ✅ VERIFY & COMPLETE
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="bg-gray-50 rounded-2xl p-8 text-center text-gray-400 mb-8">
+            No active deliveries right now. Pick one from below!
+        </div>
+    {% endif %}
+
+    <h2 class="text-xl font-bold mb-4 text-gray-400">Available Tasks</h2>
+    <div class="grid gap-4">
+        {% for task in available %}
+        <div class="bg-white border border-gray-200 rounded-xl p-6 flex items-center justify-between hover:border-black transition">
+            <div>
+                <h3 class="font-bold text-gray-900">{{ task.listing.title }}</h3>
+                <p class="text-sm text-gray-500">{{ task.listing.city }} • ₦{{ (task.total_price * 0.05)|round|int }} Earnings</p>
+            </div>
+            <form action="{{ url_for('main.accept_task', order_id=task.id) }}" method="POST">
+                <button class="bg-black text-white px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-gray-800">
+                    Accept
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <p class="text-gray-400 italic">No new tasks available in your area.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

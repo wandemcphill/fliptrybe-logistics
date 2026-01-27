@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-6 py-12">
+    <h1 class="text-3xl font-black mb-8">Messages</h1>
+
+    <div class="bg-white border border-gray-100 rounded-[2rem] overflow-hidden shadow-xl">
+        {% if contacts %}
+            <div class="divide-y divide-gray-100">
+                {% for contact in contacts %}
+                <a href="{{ url_for('main.chat', user_id=contact.id) }}" class="flex items-center gap-4 p-6 hover:bg-gray-50 transition">
+                    <div class="w-14 h-14 rounded-full bg-gray-200 overflow-hidden">
+                        {% if contact.profile_pic %}
+                        <img src="{{ url_for('static', filename='uploads/' + contact.profile_pic) }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-xl">👤</div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="font-bold text-gray-900">{{ contact.name }}</h3>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                {% if contact.is_agent %}Agent{% elif contact.is_driver %}Driver{% else %}Buyer{% endif %}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-500 truncate">Click to view conversation history...</p>
+                    </div>
+                    <div class="text-gray-300">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="p-12 text-center text-gray-400">
+                <i class="fas fa-comments text-4xl mb-4 text-gray-200"></i>
+                <p>No messages yet. Ask an agent a question!</p>
+                <a href="{{ url_for('main.market') }}" class="inline-block mt-4 text-indigo-600 font-bold text-sm">Go to Market</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

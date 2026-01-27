@@ -1,41 +1,61 @@
 import logging
+import os
 
-# Setup logging to see messages in Render Dashboard
+# Setup logging to see messages in your Terminal/Console
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def send_whatsapp(phone: str, message: str):
     """
-    Simulates sending a WhatsApp message.
-    In V2, we will replace this print statement with the Twilio/InfoBip API.
+    SIMULATION MODE: Prints to console. 
+    LIVE MODE: Replace with Twilio/Termii API call.
     """
-    logger.info(f"🟢 [WHATSAPP to {phone}]: {message}")
+    logger.info(f"\n🟢 [WHATSAPP to {phone}]:\n{message}\n" + "-"*30)
 
-def notify_parties_of_sale(buyer_phone, buyer_name, seller_phone, seller_name, item_title, pickup_details):
+def sync_sale_notifications(order):
     """
-    The 'Double-Blind' Logic:
-    1. Buyer gets Seller's Pickup Info.
-    2. Seller gets Buyer's Contact Info.
+    Synchronizes Buyer, Agent (Seller), and Driver immediately after purchase.
     """
-    
-    # 1. Message to BUYER (A) - Giving them B's Pickup Info
+    # 🛒 1. THE BUYER (Gets Agent's Pickup Info)
     buyer_msg = (
-        f"✅ Payment Confirmed for '{item_title}'.\n\n"
-        f"📦 PICKUP DETAILS:\n"
-        f"Contact: {pickup_details['contact_name']}\n"
-        f"Phone: {pickup_details['contact_phone']}\n"
-        f"Address: {pickup_details['address']}\n"
-        f"Time: {pickup_details['days']}\n\n"
-        f"Please contact the seller to arrange pickup/delivery."
+        f"✅ Payment Confirmed for '{order.listing.title}'.\n\n"
+        f"📦 PICKUP/DELIVERY DETAILS:\n"
+        f"Agent: {order.listing.agent.name}\n"
+        f"Phone: {order.listing.agent.phone}\n"
+        f"Location: {order.listing.city}, {order.listing.state}\n\n"
+        f"🔗 TRACK LIVE: http://fliptrybe.com/success/{order.id}\n"
+        f"A driver will be assigned shortly."
     )
-    send_whatsapp(buyer_phone, buyer_msg)
+    send_whatsapp(order.buyer.phone, buyer_msg)
     
-    # 2. Message to SELLER (B) - Giving them A's Contact Info
-    seller_msg = (
-        f"💰 Item Sold! '{item_title}' has been purchased.\n\n"
+    # 💰 2. THE AGENT/SELLER (Gets Buyer's Info)
+    agent_msg = (
+        f"💰 Item Sold! '{order.listing.title}' has been purchased.\n\n"
         f"👤 BUYER DETAILS:\n"
-        f"Name: {buyer_name}\n"
-        f"Phone: {buyer_phone}\n\n"
-        f"The buyer has received your pickup address."
+        f"Name: {order.buyer.name}\n"
+        f"Phone: {order.buyer.phone}\n\n"
+        f"Please prepare the item for pickup."
     )
-    send_whatsapp(seller_phone, seller_msg)
+    send_whatsapp(order.listing.agent.phone, agent_msg)
+
+def notify_driver_assigned(order):
+    """Triggered when Musa clicks 'Accept'"""
+    msg = (
+        f"🚐 Driver Assigned!\n\n"
+        f"Driver: {order.driver.name} ({order.driver.phone})\n"
+        f"Vehicle: {order.driver.vehicle_color} {order.driver.vehicle_type}\n"
+        f"Plate: {order.driver.license_plate}\n\n"
+        f"🔐 YOUR SECURE PIN: {order.verification_pin}\n"
+        f"IMPORTANT: Give this PIN to the driver ONLY when you have received your item."
+    )
+    send_whatsapp(order.buyer.phone, msg)
+
+def notify_driver_arrival(order):
+    """Triggered when Musa clicks 'I Have Arrived'"""
+    msg = (
+        f"🔔 Musa has arrived at your location!\n"
+        f"🚗 Look for: {order.driver.vehicle_color} {order.driver.vehicle_type}\n"
+        f"🔢 Plate: {order.driver.license_plate}\n\n"
+        f"Please meet him and provide your 4-digit PIN to complete the delivery."
+    )
+    send_whatsapp(order.buyer.phone, msg)
