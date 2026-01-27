@@ -3,11 +3,11 @@
 <div class="relative bg-black text-white overflow-hidden rounded-b-[4rem] min-h-[85vh] flex items-center">
     
     <div class="absolute inset-0 z-0">
-        <video autoplay muted loop playsinline class="w-full h-full object-cover opacity-60">
-            <source src="https://videos.pexels.com/video-files/3121459/3121459-hd_1920_1080_25fps.mp4" type="video/mp4">
-            <div class="w-full h-full bg-gray-900"></div>
-        </video>
-        <div class="absolute inset-0 bg-black/50"></div>
+        <img src="{{ url_for('static', filename='images/hero.jpg') }}" 
+             class="w-full h-full object-cover opacity-50" 
+             alt="FlipTrybe Background">
+             
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30"></div>
     </div>
 
     <div class="relative z-10 max-w-6xl mx-auto px-6 text-center mt-10">
