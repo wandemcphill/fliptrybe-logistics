@@ -1,30 +1,94 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-black">
-    <div class="glass-card p-8 rounded-3xl w-full max-w-md border border-white/20">
-        <h2 class="text-3xl font-bold text-white mb-6 text-center">Join the Trybe</h2>
+<div class="min-h-screen flex items-center justify-center bg-black relative overflow-hidden py-20">
+    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-900/20 to-black z-0"></div>
+
+    <div class="glass-card p-8 rounded-3xl w-full max-w-2xl border border-white/20 relative z-10">
         
-       <form method="POST" action="{{ url_for('auth.register') }}">
-            <div class="mb-4">
-                <input type="text" name="name" placeholder="Full Name" required
-                       class="w-full p-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/10 focus:border-white outline-none">
-            </div>
-            <div class="mb-4">
-                <input type="email" name="email" placeholder="Email Address" required
-                       class="w-full p-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/10 focus:border-white outline-none">
-            </div>
-            <div class="mb-4">
-                <input type="password" name="password" placeholder="Password" required
-                       class="w-full p-4 rounded-xl bg-white/10 text-white placeholder-gray-400 border border-white/10 focus:border-white outline-none">
+        <h2 class="text-3xl font-bold text-white mb-2 text-center" id="formTitle">Join the Tribe</h2>
+        <p class="text-gray-400 text-center mb-8 text-sm" id="formSub">Create your secure account</p>
+        
+        <form method="POST" action="{{ url_for('auth.register') }}" enctype="multipart/form-data">
+            
+            {% if request.args.get('role') %}
+                <input type="hidden" name="role" value="{{ request.args.get('role') }}" id="roleInput">
+            {% else %}
+                <div class="mb-8 grid grid-cols-3 gap-2 bg-white/5 p-1 rounded-xl">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="role" value="buyer" checked onclick="updateForm('buyer')" class="peer sr-only">
+                        <div class="p-3 text-center rounded-lg text-gray-400 peer-checked:bg-white peer-checked:text-black font-bold uppercase text-xs transition">User (Buy/Sell)</div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="role" value="agent" onclick="updateForm('agent')" class="peer sr-only">
+                        <div class="p-3 text-center rounded-lg text-gray-400 peer-checked:bg-white peer-checked:text-black font-bold uppercase text-xs transition">Agent</div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="role" value="driver" onclick="updateForm('driver')" class="peer sr-only">
+                        <div class="p-3 text-center rounded-lg text-gray-400 peer-checked:bg-white peer-checked:text-black font-bold uppercase text-xs transition">Driver/Rider</div>
+                    </label>
+                </div>
+            {% endif %}
+
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <input type="text" name="name" placeholder="Full Legal Name" required class="w-full p-4 rounded-xl bg-white/10 text-white border border-white/10 outline-none">
+                <input type="text" name="address" placeholder="Full Home Address" required class="w-full p-4 rounded-xl bg-white/10 text-white border border-white/10 outline-none">
             </div>
             
-            <div class="flex items-center gap-2 mb-6">
-                <input type="checkbox" name="agent" id="agent" class="w-5 h-5 accent-indigo-500">
-                <label for="agent" class="text-gray-300 text-sm">I want to sell/host (Agent Account)</label>
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <select name="state" required class="w-full p-4 rounded-xl bg-white/10 text-gray-300 border border-white/10 outline-none">
+                    <option value="" disabled selected>Select State</option>
+                    <option value="Lagos">Lagos</option>
+                    <option value="Abuja">Abuja</option>
+                    <option value="Rivers">Rivers (PH)</option>
+                    <option value="Kano">Kano</option>
+                    <option value="Oyo">Oyo</option>
+                    <option value="Enugu">Enugu</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" name="city" placeholder="City / Area" required class="w-full p-4 rounded-xl bg-white/10 text-white border border-white/10 outline-none">
             </div>
 
-            <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-500 hover:scale-105 transition">
-                Sign Up
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <input type="tel" name="phone" placeholder="Mobile Number" required class="w-full p-4 rounded-xl bg-white/10 text-white border border-white/10 outline-none">
+                <input type="tel" name="whatsapp" placeholder="WhatsApp Number" required class="w-full p-4 rounded-xl bg-white/10 text-white border border-white/10 outline-none">
+            </div>
+
+            <div id="extraContacts" class="hidden grid md:grid-cols-2 gap-4 mb-4">
+                <input type="tel" name="mobile_2" placeholder="Second Mobile (Optional)" class="w-full p-4 rounded-xl bg-white/10 text-white border border-white/10 outline-none">
+                <input type="tel" name="whatsapp_2" placeholder="Second WhatsApp (Optional)" class="w-full p-4 rounded-xl bg-white/10 text-white border border-white/10 outline-none">
+            </div>
+
+            <div class="mb-6">
+                <input type="email" name="email" placeholder="Email Address" required class="w-full p-4 rounded-xl bg-white/10 text-white border border-white/10 outline-none">
+                <input type="password" name="password" placeholder="Create Password" required class="w-full p-4 rounded-xl bg-white/10 text-white border border-white/10 mt-4 outline-none">
+            </div>
+
+            <div class="border-t border-white/10 pt-6 mb-6">
+                <h3 class="text-white font-bold text-sm uppercase tracking-widest mb-4">Verification Documents</h3>
+                
+                <div class="mb-4">
+                    <label class="text-gray-400 text-xs uppercase font-bold block mb-2" id="selfieLabel">Live Picture (Selfie)</label>
+                    <input type="file" name="kyc_selfie" accept="image/*" required class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-white/10 file:text-white">
+                </div>
+
+                <div id="idField" class="hidden mb-4">
+                    <label class="text-gray-400 text-xs uppercase font-bold block mb-2">Valid ID (NIN Slip/Voters/DL)</label>
+                    <input type="file" name="kyc_id_card" accept="image/*" class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-white/10 file:text-white">
+                </div>
+
+                <div id="videoField" class="hidden mb-4">
+                    <label class="text-gray-400 text-xs uppercase font-bold block mb-2">Face Video / Liveness Check (5 secs)</label>
+                    <input type="file" name="kyc_video" accept="video/*" class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-white/10 file:text-white">
+                </div>
+
+                <div id="plateField" class="hidden mb-4">
+                    <label class="text-gray-400 text-xs uppercase font-bold block mb-2">Vehicle Plate Number (Clear Photo)</label>
+                    <input type="file" name="kyc_plate" accept="image/*" class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-white/10 file:text-white">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-white text-black font-bold py-4 rounded-xl hover:scale-105 transition">
+                Complete Registration
             </button>
         </form>
         
@@ -33,4 +97,51 @@
         </p>
     </div>
 </div>
+
+<script>
+    function updateForm(role) {
+        // Get URL role if present to force state
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('role')) role = urlParams.get('role');
+
+        const extraContacts = document.getElementById('extraContacts');
+        const idField = document.getElementById('idField');
+        const videoField = document.getElementById('videoField');
+        const plateField = document.getElementById('plateField');
+        const selfieLabel = document.getElementById('selfieLabel');
+
+        // Reset all hidden fields
+        extraContacts.classList.add('hidden');
+        idField.classList.add('hidden');
+        videoField.classList.add('hidden');
+        plateField.classList.add('hidden');
+
+        if (role === 'buyer') {
+            document.getElementById('formTitle').innerText = "Join to Buy & Sell";
+            selfieLabel.innerText = "Live Picture (Selfie) - Required";
+            // Users: Minimal verification (Selfie is already showing by default)
+        } 
+        else if (role === 'agent') {
+            document.getElementById('formTitle').innerText = "Agent Registration";
+            extraContacts.classList.remove('hidden'); // Agents get extra contacts
+            idField.classList.remove('hidden');       // Agents need NIN/Voters
+            videoField.classList.remove('hidden');    // Agents need Liveness video
+            selfieLabel.innerText = "Clear Face Picture";
+        } 
+        else if (role === 'driver') {
+            document.getElementById('formTitle').innerText = "Rider Registration";
+            idField.classList.remove('hidden');       // Drivers need ID
+            videoField.classList.remove('hidden');    // Drivers need Face Video
+            plateField.classList.remove('hidden');    // Drivers need Plate Number
+            selfieLabel.innerText = "Clear Face Picture";
+        }
+    }
+
+    // Run on load
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const role = urlParams.get('role') || 'buyer'; // Default to buyer
+        updateForm(role);
+    };
+</script>
 {% endblock %}
