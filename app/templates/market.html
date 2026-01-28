@@ -103,16 +103,14 @@
                 <div>
                     <h2 class="text-3xl font-black text-zinc-900 tracking-tighter">Market Pulse</h2>
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">
-                        Detected <span class="text-indigo-600 font-black">{{ items|length if items is list else items.total }} active transmissions</span>
+                        Detected <span class="text-indigo-600 font-black">{{ items|length }} active transmissions</span>
                     </p>
                 </div>
             </div>
-
-            {% set listings_list = items.items if items.items is defined else items %}
             
-            {% if listings_list %}
+            {% if items %}
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-                {% for item in listings_list %}
+                {% for item in items %}
                 <div class="group bg-white rounded-[3.5rem] border border-gray-100 p-5 hover:shadow-2xl hover:shadow-indigo-100/30 hover:-translate-y-3 transition-all duration-700 relative overflow-hidden">
                     <div class="h-64 rounded-[2.5rem] overflow-hidden relative bg-gray-50 mb-8">
                         <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" 
