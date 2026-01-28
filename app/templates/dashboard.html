@@ -6,114 +6,88 @@
     
     <div class="grid lg:grid-cols-12 gap-12 items-start">
         
-        <div class="lg:col-span-4 lg:sticky lg:top-28">
-            <div class="bg-zinc-900 text-white p-10 rounded-[3.5rem] shadow-2xl relative overflow-hidden group border border-white/5">
-                <div class="relative z-10">
-                    <p class="text-[9px] font-black uppercase text-zinc-500 tracking-[0.3em] mb-4">Liquidity Node (Wallet)</p>
-                    <h2 class="text-5xl font-black mb-2 tracking-tighter">₦{{ "{:,.2f}".format(current_user.wallet_balance) }}</h2>
-                    <div class="mt-12 pt-10 border-t border-white/5 space-y-5">
-                        <input type="number" id="deposit-amount" placeholder="5,000" class="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-5 text-lg font-bold text-white outline-none transition-all">
-                        <button onclick="payWithPaystack()" class="w-full bg-white text-black py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-emerald-500 hover:text-white transition-all">Synchronize Funds</button>
-                    </div>
+        <div class="lg:col-span-4 lg:sticky lg:top-28 space-y-8">
+            <div class="bg-zinc-900 text-white p-10 rounded-[3.5rem] shadow-2xl border border-white/5">
+                <p class="text-[9px] font-black uppercase text-zinc-500 tracking-[0.3em] mb-4">Node Balance</p>
+                <h2 class="text-5xl font-black mb-2 tracking-tighter">₦{{ "{:,.2f}".format(current_user.wallet_balance) }}</h2>
+                
+                <div class="mt-12 pt-10 border-t border-white/5 space-y-4">
+                    <p class="text-[8px] font-black uppercase tracking-widest text-zinc-500">Deposit Signal</p>
+                    <input type="number" id="deposit-amount" placeholder="₦ Amount" class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none">
+                    <button onclick="payWithPaystack()" class="w-full bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">Synchronize Funds</button>
                 </div>
             </div>
 
-            {% if not current_user.is_driver %}
-            <div class="mt-8 p-10 bg-indigo-600 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group cursor-pointer" onclick="openPilotOnboarding()">
-                <div class="relative z-10">
-                    <h3 class="text-2xl font-black tracking-tighter mb-6">Become a Pilot</h3>
-                    <div class="text-[10px] font-black uppercase tracking-widest bg-black/20 w-fit px-6 py-3 rounded-xl">Join the Fleet</div>
-                </div>
-            </div>
-            {% else %}
-            <div class="mt-8 p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm">
-                <div class="flex justify-between items-center mb-6">
-                    <p class="text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">Pilot Velocity</p>
-                    <span class="text-[8px] font-black bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg">
-                        {{ current_user.handshake_count_weekly }}/10
+            <div class="bg-white p-10 rounded-[3.5rem] border border-gray-100 shadow-sm">
+                <div class="flex justify-between items-center mb-8">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-gray-400">Withdrawal Node</p>
+                    <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-[8px] font-black rounded-lg">
+                        {{ 'Verified' if current_user.is_verified else 'Restricted' }}
                     </span>
                 </div>
-
-                <div id="velocity-meter" 
-                     class="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden"
-                     data-percent="{{ (current_user.handshake_count_weekly * 10) | default(0) }}">
-                    <div id="velocity-bar" class="h-full bg-indigo-500 transition-all duration-1000" style="width: 0%"></div>
-                </div>
-                
-                <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center mt-4">Bonus Latch at 10 handshakes</p>
+                <form action="{{ url_for('main.withdraw_funds') }}" method="POST" class="space-y-4">
+                    <input type="number" name="amount" placeholder="₦ Amount" step="0.01" required
+                           class="w-full bg-gray-50 border border-transparent rounded-2xl py-4 px-6 font-bold outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10">
+                    <button type="submit" class="w-full bg-black text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl">
+                        Release Liquidity
+                    </button>
+                </form>
+            </div>
+            
+            {% if not current_user.is_driver %}
+            <div class="p-10 bg-indigo-600 rounded-[3rem] text-white shadow-2xl cursor-pointer" onclick="openPilotOnboarding()">
+                <h3 class="text-2xl font-black tracking-tighter mb-6">Become a Pilot</h3>
+                <div class="text-[10px] font-black uppercase tracking-widest bg-black/20 w-fit px-6 py-3 rounded-xl">Join the Fleet</div>
             </div>
             {% endif %}
         </div>
 
         <div class="lg:col-span-8">
-            <div class="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
-                <h2 class="text-4xl font-black text-gray-900 tracking-tighter">Command Center</h2>
-            </div>
+            <h2 class="text-4xl font-black text-gray-900 tracking-tighter mb-12">Command Center</h2>
 
-            <div id="tab-orders" class="space-y-8">
+            <div class="space-y-8 mb-16">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500">Active Handshakes</p>
                 {% for order in orders_bought %}
-                <div class="order-signal hidden" 
-                     data-id="{{ order.id }}" 
-                     data-title="{{ order.listing.title }}" 
-                     data-driver="{{ order.driver.name if order.driver else '' }}">
-                </div>
-
                 <div class="group bg-white p-10 rounded-[3.5rem] border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-700">
                     <div class="flex flex-col md:flex-row justify-between items-start gap-10">
                         <div class="flex-grow">
                             <h3 class="text-2xl font-black text-gray-900 mb-2">{{ order.listing.title }}</h3>
                             <p class="text-[9px] font-black text-indigo-500 uppercase tracking-widest">{{ order.handshake_id }}</p>
                         </div>
-
-                        <div class="flex flex-col items-end gap-5">
-                            <p class="text-3xl font-black text-gray-900">₦{{ "{:,.0f}".format(order.total_price) }}</p>
-                            <div class="flex gap-2">
-                                {% if order.delivery_status == 'Delivered' %}
-                                <button onclick="triggerReview('{{ order.id }}')" class="bg-emerald-500 text-white px-6 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all">Rate</button>
-                                {% elif not order.is_locked_for_dispute %}
-                                <button onclick="triggerDispute('{{ order.id }}')" class="bg-rose-50 text-rose-600 px-6 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all">SOS</button>
-                                {% endif %}
-                            </div>
-                        </div>
+                        <p class="text-3xl font-black text-gray-900">₦{{ "{:,.0f}".format(order.total_price) }}</p>
                     </div>
                 </div>
                 {% endfor %}
             </div>
+
+            <div class="space-y-6">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Audit Trail (Recent Transactions)</p>
+                {% if history %}
+                    <div class="bg-white rounded-[3rem] border border-gray-100 overflow-hidden">
+                        {% for tx in history %}
+                        <div class="flex justify-between items-center p-8 border-b border-gray-50 last:border-0">
+                            <div class="flex items-center gap-6">
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center {% if tx.type == 'Debit' %} bg-rose-50 text-rose-500 {% else %} bg-emerald-50 text-emerald-500 {% endif %}">
+                                    <i class="fas {% if tx.type == 'Debit' %} fa-arrow-up-right {% else %} fa-arrow-down-left {% endif %}"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-black">{{ tx.type }} - {{ tx.status }}</p>
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase">{{ tx.timestamp.strftime('%d %b, %H:%M') }}</p>
+                                </div>
+                            </div>
+                            <p class="font-black {% if tx.type == 'Debit' %} text-rose-600 {% else %} text-emerald-600 {% endif %}">
+                                {{ '-' if tx.type == 'Debit' else '+' }}₦{{ "{:,.2f}".format(tx.amount) }}
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="p-12 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
+                        <p class="text-[10px] font-black text-gray-300 uppercase tracking-widest">No transaction signals detected</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
-
-<script>
-/**
- * 🛰️ SYSTEM INITIALIZATION & HARDENED TRIGGERS
- */
-document.addEventListener('DOMContentLoaded', () => {
-    // Apply the velocity width dynamically to clear CSS diagnostic errors
-    const meter = document.getElementById('velocity-meter');
-    const bar = document.getElementById('velocity-bar');
-    if (meter && bar) {
-        const percent = meter.getAttribute('data-percent');
-        bar.style.width = percent + '%';
-    }
-});
-
-function triggerReview(orderId) {
-    const dataNode = document.querySelector(`.order-signal[data-id="${orderId}"]`);
-    if (dataNode) {
-        const title = dataNode.getAttribute('data-title');
-        const driver = dataNode.getAttribute('data-driver');
-        openReviewTerminal(orderId, title, driver);
-    }
-}
-
-function triggerDispute(orderId) {
-    const dataNode = document.querySelector(`.order-signal[data-id="${orderId}"]`);
-    if (dataNode) {
-        const title = dataNode.getAttribute('data-title');
-        openDisputeTerminal(orderId, title);
-    }
-}
-
-// ... Original openReviewTerminal, openDisputeTerminal, switchTab, and payWithPaystack logic here ...
-</script>
 {% endblock %}

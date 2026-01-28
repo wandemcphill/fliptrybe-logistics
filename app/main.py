@@ -3,11 +3,10 @@ import secrets
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Listing, Order, Notification, Dispute
+from app.models import User, Listing, Order, Notification, Dispute, Transaction
 
 main = Blueprint('main', __name__)
 
-# 🛰️ Global Signal Processor (Fixes the marquee error)
 @main.app_context_processor
 def inject_signals():
     return dict(activity_signals=[
@@ -43,18 +42,39 @@ def market():
 def dashboard():
     orders_bought = Order.query.filter_by(buyer_id=current_user.id).all()
     listings = Listing.query.filter_by(user_id=current_user.id).all()
-    return render_template('dashboard.html', orders_bought=orders_bought, listings=listings)
+    # 📜 Fetch Transactions for the Audit Trail
+    history = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.timestamp.desc()).limit(10).all()
+    return render_template('dashboard.html', orders_bought=orders_bought, listings=listings, history=history)
 
-# 🛠️ Added missing Settings route to fix url_for build error
+@main.route('/wallet/withdraw', methods=['POST'])
+@login_required
+def withdraw_funds():
+    if not current_user.is_verified:
+        flash("Identity Signal Missing: Please complete KYC to withdraw funds.", "error")
+        return redirect(url_for('main.dashboard'))
+    
+    amount = request.form.get('amount', type=float)
+    if not amount or amount < 500:
+        flash("Minimum withdrawal threshold is ₦500.", "error")
+        return redirect(url_for('main.dashboard'))
+
+    if current_user.wallet_balance >= amount:
+        current_user.wallet_balance -= amount
+        
+        # 🧪 Create Transaction Record
+        tx = Transaction(user_id=current_user.id, amount=amount, type='Debit', status='Pending')
+        db.session.add(tx)
+        db.session.commit()
+        
+        flash(f"Withdrawal Signal Transmitted: ₦{amount:,.2f} is being processed.", "success")
+    else:
+        flash("Insufficient Liquidity in Node Wallet.", "error")
+    return redirect(url_for('main.dashboard'))
+
 @main.route('/settings')
 @login_required
 def settings():
-    return render_template('dashboard.html') # Redirecting to dashboard for now
-
-@main.route('/api/balance-signal')
-@login_required
-def balance_signal():
-    return jsonify({'wallet_balance': current_user.wallet_balance})
+    return render_template('dashboard.html')
 
 @main.route('/pilot/cockpit')
 @login_required
@@ -65,27 +85,10 @@ def pilot_console():
     deliveries = Order.query.filter_by(driver_id=current_user.id).all()
     return render_template('pilot_console.html', deliveries=deliveries)
 
-@main.route('/order/update-status/<int:order_id>/<status>', methods=['POST'])
-@login_required
-def update_delivery(order_id, status):
-    order = Order.query.get_or_404(order_id)
-    if order.driver_id == current_user.id:
-        order.delivery_status = status
-        db.session.commit()
-        flash(f"Transmission Updated: {status}", "success")
-    return redirect(url_for('main.pilot_console'))
-
-@main.route('/order/release/<int:order_id>', methods=['POST'])
-@login_required
-def release_funds(order_id):
-    order = Order.query.get_or_404(order_id)
-    if order.buyer_id == current_user.id:
-        seller = order.listing.seller
-        seller.wallet_balance += order.total_price
-        order.status = 'Released'
-        db.session.commit()
-        flash("Handshake Confirmed. Liquidity Released.", "success")
-    return redirect(url_for('main.dashboard'))
+@main.route('/product/<int:listing_id>')
+def product_detail(listing_id):
+    item = Listing.query.get_or_404(listing_id)
+    return render_template('product_detail.html', item=item)
 
 @main.route('/support', methods=['GET', 'POST'])
 def support():
@@ -93,8 +96,3 @@ def support():
         flash("SIGNAL_CONFIRMED", "success")
         return redirect(url_for('main.support'))
     return render_template('support.html')
-
-@main.route('/product/<int:listing_id>')
-def product_detail(listing_id):
-    item = Listing.query.get_or_404(listing_id)
-    return render_template('product_detail.html', item=item)
