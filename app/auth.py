@@ -1,4 +1,5 @@
-import os, secrets
+import os
+import secrets
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from werkzeug.utils import secure_filename
 from flask_login import login_user, logout_user, login_required, current_user
@@ -41,33 +42,36 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         
+        # 🛠️ Helper function to save files safely
         def save_kyc_file(file_obj, prefix):
             if file_obj and file_obj.filename:
                 random_hex = secrets.token_hex(4)
                 fname = secure_filename(f"{prefix}_{random_hex}_{file_obj.filename}")
-                # 🛠️ Use root_path to ensure relative stability on production servers
+                # Ensure the folder exists on the server
                 path = os.path.join(current_app.root_path, 'static', 'uploads', 'kyc')
                 os.makedirs(path, exist_ok=True)
                 file_obj.save(os.path.join(path, fname))
                 return fname
             return None
 
-        # 📸 Tactical File Handling (KYC)
+        # 📸 Capture Files from Request
+        # Note: Your HTML form must have enctype="multipart/form-data"
         kyc_selfie = save_kyc_file(request.files.get('kyc_selfie'), "SELFIE")
         kyc_id = save_kyc_file(request.files.get('kyc_id_card'), "ID")
         kyc_video = save_kyc_file(request.files.get('kyc_video'), "VIDEO")
         kyc_plate = save_kyc_file(request.files.get('kyc_plate'), "PLATE")
 
-        # 🔐 Signal Sanitization: Ensure phone is just numbers for Termii
+        # 🔐 Signal Sanitization
         phone_raw = request.form.get('phone', '')
         sanitized_phone = ''.join(filter(str.isdigit, phone_raw))
 
         hashed_pw = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
 
+        # ✅ FIXED: Exact column match with models.py
         new_user = User(
             username=form.username.data.lower(),
             email=form.email.data.lower(),
-            name=request.form.get('name'),
+            name=request.form.get('name'), # Ensure your HTML input has name="name"
             password=hashed_pw,
             phone=sanitized_phone,
             address=request.form.get('address'),
@@ -75,10 +79,14 @@ def register():
             city=request.form.get('city'),
             role=form.role.data,
             is_driver=(form.role.data == 'driver'),
-            kyc_selfie=kyc_selfie,
-            kyc_id_card=kyc_id,
-            kyc_video=kyc_video,
-            kyc_plate=kyc_plate,
+            
+            # 👇 Mapped correctly to User class
+            kyc_selfie_file=kyc_selfie,
+            kyc_id_file=kyc_id,
+            kyc_video_file=kyc_video,
+            kyc_plate=kyc_plate, # This one has no _file suffix in model
+            
+            # Set profile picture
             image_file=kyc_selfie if kyc_selfie else 'default.jpg'
         )
 
