@@ -13,13 +13,12 @@ from sqlalchemy import func, or_
 main = Blueprint('main', __name__)
 
 # ==========================================
-# 🏠 LANDING NODE (The Missing Piece)
+# 🏠 LANDING NODE (The 'Fresh Drops' Fuel)
 # ==========================================
 @main.route("/")
 @main.route("/home")
 def index():
     """
-    The 'Fresh Drops' Fuel.
     Fetches the 4 newest items to display on the landing page.
     """
     # 🛒 Fetch 4 newest items that are 'Available'
@@ -66,8 +65,9 @@ def market():
     active_hubs = db.session.query(Listing.state).filter_by(status='Available').distinct().all()
     active_hubs = [h[0] for h in active_hubs if h[0]]
 
+    # ✅ FIXED: 'listings' is renamed to 'items' here so market.html can read it
     return render_template('market.html', 
-                           listings=listings, 
+                           items=listings, 
                            hubs=active_hubs,
                            current_filters=request.args)
 
