@@ -7,7 +7,10 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
     email = db.Column(db.String(120), unique=True, index=True)
-    password_hash = db.Column(db.String(128))
+    
+    # ✅ SECURITY FIX: 256 chars to prevent "Value too long" crash
+    password_hash = db.Column(db.String(256))
+    
     role = db.Column(db.String(20), default='user')
     is_admin = db.Column(db.Boolean, default=False)
     is_driver = db.Column(db.Boolean, default=False)
@@ -23,7 +26,7 @@ class User(UserMixin, db.Model):
     kyc_video_file = db.Column(db.String(120))
     kyc_plate_number_file = db.Column(db.String(120))
 
-    # ✅ SECURITY TOOLS (These were missing!)
+    # ✅ SECURITY METHODS
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -53,7 +56,7 @@ class Order(db.Model):
     escrow_reference = db.Column(db.String(64))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Placeholders for future expansion (prevents import errors)
+# Placeholders (Essential for stability)
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
