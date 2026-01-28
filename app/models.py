@@ -24,10 +24,12 @@ class User(UserMixin, db.Model):
     # KYC Signals
     kyc_selfie_file = db.Column(db.String(120))
     kyc_id_card_file = db.Column(db.String(120))
+    kyc_video_file = db.Column(db.String(120))
     
     # Relationships
     listings = db.relationship('Listing', backref='seller', lazy='dynamic')
     orders = db.relationship('Order', backref='buyer', lazy='dynamic', foreign_keys='Order.user_id')
+    notifications = db.relationship('Notification', backref='recipient', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -50,12 +52,39 @@ class Listing(db.Model):
 
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id')) # Buyer
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id')) 
     listing_id = db.Column(db.Integer, db.ForeignKey('listing.id'))
-    status = db.Column(db.String(20), default='Pending') # Pending, Completed, Cancelled
+    status = db.Column(db.String(20), default='Pending') 
     delivery_status = db.Column(db.String(20), default='Pending')
     total_price = db.Column(db.Float)
     escrow_reference = db.Column(db.String(64))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
+    
     listing = db.relationship('Listing', backref='orders')
+
+# ✅ ADDED: Missing signals required by admin.py
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    title = db.Column(db.String(64))
+    message = db.Column(db.String(256))
+    read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    amount = db.Column(db.Float)
+    fee_deducted = db.Column(db.Float, default=0.0)
+    type = db.Column(db.String(20))
+    status = db.Column(db.String(20), default='Success')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Dispute(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+    reason = db.Column(db.String(255))
+    status = db.Column(db.String(20), default='Open')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    order = db.relationship('Order', backref='disputes')
