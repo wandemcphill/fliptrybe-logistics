@@ -1,32 +1,34 @@
-import os, secrets
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, abort
-from flask_login import login_required, current_user
-from app import db
-from app.models import Listing, Order
+# (Keep your imports here)
 
-main = Blueprint('main', __name__)
-
-# ... (keep your save_file helper here)
-
-@main.route("/escrow")
+@main.route("/settings", methods=['GET', 'POST'])
 @login_required
-def escrow_dashboard():
-    """Handshake Terminal: Where buyers track their pending trades."""
-    pending_trades = Order.query.filter_by(user_id=current_user.id).all()
-    return render_template('escrow_dashboard.html', trades=pending_trades)
+def settings():
+    if request.method == 'POST':
+        current_user.name = request.form.get('name')
+        current_user.phone = request.form.get('phone')
+        if current_user.is_driver:
+            current_user.vehicle_type = request.form.get('vehicle_type')
+            current_user.vehicle_year = request.form.get('vehicle_year')
+            current_user.license_plate = request.form.get('license_plate')
+        if 'profile_pic' in request.files:
+            pic_file = save_file(request.files['profile_pic'], 'avatars')
+            if pic_file: current_user.image_file = pic_file
+        db.session.commit()
+        flash("Identity Profile Synchronized.", "success")
+        return redirect(url_for('main.settings'))
+    return render_template('settings.html')
 
-@main.route("/escrow/release/<int:order_id>", methods=['POST'])
+@main.route("/submit-kyc", methods=['POST'])
 @login_required
-def release_funds(order_id):
-    """Release Signal: Finalizes the escrow handshake."""
-    order = Order.query.get_or_404(order_id)
-    if order.user_id != current_user.id:
-        abort(403)
-    
-    order.status = 'Completed'
-    order.delivery_status = 'Delivered'
+def submit_kyc():
+    if 'kyc_selfie' in request.files:
+        current_user.kyc_selfie_file = save_file(request.files['kyc_selfie'], 'kyc_docs')
+    if 'kyc_id' in request.files:
+        current_user.kyc_id_card_file = save_file(request.files['kyc_id'], 'kyc_docs')
+    if 'kyc_video' in request.files:
+        current_user.kyc_video_file = save_file(request.files['kyc_video'], 'kyc_docs')
     db.session.commit()
-    flash('Handshake Finalized. Funds released to Seller.', 'success')
-    return redirect(url_for('main.escrow_dashboard'))
+    flash("Identity Signals transmitted to the Vault.", "success")
+    return redirect(url_for('main.settings'))
 
-# ... (keep your market, settings, and product_detail routes)
+# (Ensure all other routes from our audit are included here)
