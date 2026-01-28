@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
@@ -32,7 +31,7 @@ class User(UserMixin, db.Model):
     kyc_video_file = db.Column(db.String(120))
     kyc_plate_file = db.Column(db.String(120))
     
-    # 🚚 Pilot Telemetry & Stats
+    # 🚚 Pilot Telemetry
     vehicle_type = db.Column(db.String(50))
     vehicle_year = db.Column(db.String(20))
     license_plate = db.Column(db.String(20))
@@ -51,6 +50,9 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        # Safety check for empty or null hashes
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
 
     @property
@@ -64,9 +66,9 @@ class Listing(db.Model):
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     price = db.Column(db.Float, nullable=False)
-    image_filename = db.Column(db.String(120))
+    image_filename = db.Column(db.String(120), default='default_item.jpg') # 🛡️ Safe Default
     category = db.Column(db.String(50)) 
-    section = db.Column(db.String(20), default='declutter') 
+    section = db.Column(db.String(20), default='declutter') # 🛠️ Fixed missing column
     condition = db.Column(db.String(20))
     brand = db.Column(db.String(50))
     specifications = db.Column(db.String(100))
@@ -82,7 +84,7 @@ class Order(db.Model):
     verification_pin = db.Column(db.String(4))
     total_price = db.Column(db.Float, nullable=False)
     delivery_status = db.Column(db.String(20), default='Processing')
-    status = db.Column(db.String(20), default='Pending') # Pending, Released, Disputed
+    status = db.Column(db.String(20), default='Pending') 
     order_date = db.Column(db.DateTime, default=datetime.utcnow)
     
     buyer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -94,29 +96,13 @@ class Order(db.Model):
     def handshake_id(self):
         return f"HSK-{self.escrow_reference or self.id + 10000}"
 
-    @property
-    def subtotal(self):
-        return self.total_price / 1.075
-
-    @property
-    def tax_amount(self):
-        return self.total_price - self.subtotal
-
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
-    type = db.Column(db.String(20), nullable=False) # 'Credit', 'Debit', 'Withdrawal'
+    type = db.Column(db.String(20), nullable=False) # 'Credit', 'Debit'
     status = db.Column(db.String(20), default='Success')
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
-class Dispute(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
-    reason = db.Column(db.String(100))
-    description = db.Column(db.Text)
-    status = db.Column(db.String(20), default='Open')
-    order = db.relationship('Order', backref='order_disputes')
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
