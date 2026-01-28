@@ -18,7 +18,10 @@ class User(UserMixin, db.Model):
     
     # Relationships
     listings = db.relationship('Listing', backref='seller', lazy='dynamic')
-    orders = db.relationship('Order', backref='buyer', lazy='dynamic')
+    orders = db.relationship('Order', backref='buyer', lazy='dynamic', foreign_keys='Order.user_id')
+    
+    # ✅ NEW: Notification Relationship (Fixes the undefined error)
+    notifications = db.relationship('Notification', backref='recipient', lazy='dynamic')
     
     # KYC Fields
     kyc_selfie_file = db.Column(db.String(120))
@@ -50,21 +53,50 @@ class Listing(db.Model):
 
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id')) # Buyer
     listing_id = db.Column(db.Integer, db.ForeignKey('listing.id'))
+    driver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Driver
+    
+    # ✅ Expanded for Admin Panel & Logistics
     status = db.Column(db.String(20), default='Pending') # Pending, Escrowed, Delivered, Completed
+    delivery_status = db.Column(db.String(20), default='Pending')
+    total_price = db.Column(db.Float)
     escrow_reference = db.Column(db.String(64))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Placeholders (Essential for stability)
-class Transaction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    # Relationships
+    listing = db.relationship('Listing', backref='orders')
 
+# ✅ Fully Constructed Models (Required for Admin/Notifications)
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    title = db.Column(db.String(64))
+    message = db.Column(db.String(256))
+    read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    amount = db.Column(db.Float)
+    fee_deducted = db.Column(db.Float, default=0.0)
+    type = db.Column(db.String(20)) # Deposit, Withdrawal, Sale
+    status = db.Column(db.String(20), default='Success')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Dispute(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+    reason = db.Column(db.String(255))
+    status = db.Column(db.String(20), default='Open')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    order = db.relationship('Order', backref='disputes')
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+    rating = db.Column(db.Integer)
+    comment = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
