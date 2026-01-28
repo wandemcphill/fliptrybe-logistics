@@ -16,6 +16,9 @@ class User(UserMixin, db.Model):
     is_driver = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False)
     
+    # ✅ FIX: Wallet Balance (This was missing!)
+    wallet_balance = db.Column(db.Float, default=0.0)
+    
     # Relationships
     listings = db.relationship('Listing', backref='seller', lazy='dynamic')
     orders = db.relationship('Order', backref='buyer', lazy='dynamic', foreign_keys='Order.user_id')
