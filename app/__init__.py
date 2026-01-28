@@ -60,6 +60,15 @@ def create_app():
     csrf.init_app(app)
 
     # ==========================================
+    # 🕵️‍♂️ USER LOADER (This was missing!)
+    # ==========================================
+    @login_manager.user_loader
+    def load_user(user_id):
+        # We import here to avoid "Circular Import" errors
+        from app.models import User
+        return User.query.get(int(user_id))
+
+    # ==========================================
     # 🔗 BLUEPRINT REGISTRATION
     # ==========================================
     from app.auth import auth as auth_blueprint
