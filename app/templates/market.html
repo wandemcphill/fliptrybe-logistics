@@ -21,11 +21,11 @@
                 <div class="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200/50 flex-grow lg:flex-grow-0">
                     <a href="{{ url_for('main.market', section='declutter') }}" 
                        class="flex-1 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 text-center {{ 'bg-white text-black shadow-lg' if current_filters.get('section') != 'shortlet' else 'text-gray-400 hover:text-black' }}">
-                        📦 Asset Market
+                       📦 Asset Market
                     </a>
                     <a href="{{ url_for('main.market', section='shortlet') }}" 
                        class="flex-1 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 text-center {{ 'bg-white text-black shadow-lg' if current_filters.get('section') == 'shortlet' else 'text-gray-400 hover:text-black' }}">
-                        🏢 Shortlet Hub
+                       🏢 Shortlet Hub
                     </a>
                 </div>
                 
@@ -113,7 +113,7 @@
                 {% for item in items %}
                 <div class="group bg-white rounded-[3.5rem] border border-gray-100 p-5 hover:shadow-2xl hover:shadow-indigo-100/30 hover:-translate-y-3 transition-all duration-700 relative overflow-hidden">
                     <div class="h-64 rounded-[2.5rem] overflow-hidden relative bg-gray-50 mb-8">
-                        <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" 
+                        <img src="{{ url_for('static', filename='uploads/' + (item.image_filename or 'default_item.jpg')) }}" 
                              onerror="this.src='https://ui-avatars.com/api/?name=Asset'"
                              class="w-full h-full object-cover group-hover:scale-110 transition duration-[2s] ease-out">
                         <div class="absolute bottom-5 left-5 flex gap-2">

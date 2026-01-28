@@ -7,6 +7,15 @@ from app.models import User, Listing, Order, Notification, Dispute
 
 main = Blueprint('main', __name__)
 
+# 🛰️ Global Signal Processor (Fixes the marquee error)
+@main.app_context_processor
+def inject_signals():
+    return dict(activity_signals=[
+        {'type': 'handshake', 'msg': 'New Handshake: MacBook Pro M3 in Ikeja'},
+        {'type': 'transmission', 'msg': 'Pilot Musa active on Lekki Grid'},
+        {'type': 'handshake', 'msg': 'Liquidity Released: Order #8829'}
+    ])
+
 @main.route('/')
 def index():
     items = Listing.query.filter_by(status='Available').order_by(Listing.date_posted.desc()).limit(8).all()
@@ -35,6 +44,12 @@ def dashboard():
     orders_bought = Order.query.filter_by(buyer_id=current_user.id).all()
     listings = Listing.query.filter_by(user_id=current_user.id).all()
     return render_template('dashboard.html', orders_bought=orders_bought, listings=listings)
+
+# 🛠️ Added missing Settings route to fix url_for build error
+@main.route('/settings')
+@login_required
+def settings():
+    return render_template('dashboard.html') # Redirecting to dashboard for now
 
 @main.route('/api/balance-signal')
 @login_required
