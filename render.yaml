@@ -6,7 +6,7 @@ services:
     startCommand: gunicorn run:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11  # Simplified for maximum compatibility
+        value: 3.11.9  # Explicit patch version for Render's builder
       - key: FLASK_DEBUG
         value: "False"
       - key: DATABASE_URL
