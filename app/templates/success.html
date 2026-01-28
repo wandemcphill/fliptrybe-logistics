@@ -1,80 +1,173 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="flex flex-col h-[calc(100vh-80px)]">
-    <div id="map" class="flex-grow w-full z-10"></div>
 
-    <div class="bg-white p-8 rounded-t-[3rem] shadow-2xl z-20 -mt-10 relative">
-        <div class="max-w-xl mx-auto">
+<div id="security-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/95 backdrop-blur-3xl px-6">
+    <div class="bg-white rounded-[3.5rem] p-12 max-w-lg w-full shadow-2xl text-center relative overflow-hidden">
+        <div class="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 text-3xl mx-auto mb-8 shadow-inner">
+            <i class="fas fa-shield-check"></i>
+        </div>
+        <h2 class="text-3xl font-black tracking-tighter text-zinc-900 mb-4">Escrow Initialized</h2>
+        <p class="text-gray-500 text-sm mb-10 leading-relaxed font-medium">To protect your ₦{{ "{:,.0f}".format(order.total_price) }}, you must acknowledge the Handshake Protocol:</p>
+        
+        <div class="space-y-4 mb-10 text-left">
+            <div class="flex items-start gap-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                <i class="fas fa-fingerprint text-indigo-500 mt-1"></i>
+                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-700">Funds are locked in the Trybe Vault until PIN release.</p>
+            </div>
+            <div class="flex items-start gap-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                <i class="fas fa-eye text-emerald-500 mt-1"></i>
+                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-700">Only release the PIN after physical inspection or arrival.</p>
+            </div>
+        </div>
+
+        <button onclick="dismissSecurity()" class="w-full py-6 bg-zinc-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-indigo-600 transition-all shadow-xl active:scale-95">
+            Accept Protocol
+        </button>
+    </div>
+</div>
+
+<div class="relative h-[calc(100vh-80px)] w-full overflow-hidden bg-zinc-100 font-sans print:h-auto print:overflow-visible">
+    
+    <div id="map" class="absolute inset-0 z-10 grayscale-[0.3] contrast-[1.2] brightness-[0.9] print:hidden"></div>
+
+    <div class="absolute top-8 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-6 print:hidden">
+        <div class="bg-black/95 backdrop-blur-xl p-5 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.8)]"></div>
+                <span class="text-[9px] font-black text-white uppercase tracking-[0.4em]">Signal: Secure</span>
+            </div>
+            <span class="text-[8px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-4 py-1.5 rounded-xl border border-indigo-500/20">
+                HSK-{{ order.handshake_id }}
+            </span>
+        </div>
+    </div>
+
+    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 w-full max-w-2xl px-6 print:static print:mx-auto print:mt-10">
+        <div id="receipt-area" class="bg-white/95 backdrop-blur-3xl p-12 rounded-[4rem] shadow-[0_40px_100px_rgba(0,0,0,0.15)] border border-white relative overflow-hidden">
             
-            <div class="flex items-center justify-between mb-8">
+            {% if order.listing.section == 'shortlet' and order.booking %}
+            <div class="mb-10 p-6 bg-indigo-50 rounded-3xl border border-indigo-100 flex justify-between items-center">
                 <div class="flex items-center gap-4">
+                    <i class="fas fa-calendar-check text-indigo-600"></i>
+                    <div>
+                        <p class="text-[8px] font-black text-indigo-400 uppercase tracking-widest">Reservation Signal</p>
+                        <p class="text-xs font-black text-zinc-900">{{ order.booking.check_in.strftime('%b %d') }} — {{ order.booking.check_out.strftime('%b %d, %Y') }}</p>
+                    </div>
+                </div>
+                <span class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest">
+                    {{ (order.booking.check_out - order.booking.check_in).days }} Nights
+                </span>
+            </div>
+            {% endif %}
+
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-8">
+                <div class="flex items-center gap-6">
                     <div class="relative">
-                        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-3xl shadow-inner overflow-hidden">
-                            {% if order.driver.profile_pic %}
-                            <img src="{{ url_for('static', filename='uploads/' + order.driver.profile_pic) }}" class="w-full h-full object-cover">
+                        <div class="w-24 h-24 bg-zinc-900 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl">
+                            {% if order.driver %}
+                                <img src="{{ url_for('static', filename='uploads/' + order.driver.image_file) }}" class="w-full h-full object-cover">
                             {% else %}
-                            🚐
+                                <div class="w-full h-full flex items-center justify-center text-white text-3xl"><i class="fas fa-satellite-dish"></i></div>
                             {% endif %}
                         </div>
-                        <div class="absolute -bottom-2 -right-2 bg-black text-white px-2 py-0.5 rounded-lg text-[10px] font-black">
-                            ★ {{ "%.1f"|format(order.driver.rating if order.driver else 5.0) }}
-                        </div>
+                        <div class="absolute -bottom-2 -right-2 bg-black text-white px-3 py-1.5 rounded-xl text-[8px] font-black shadow-lg uppercase">Pilot</div>
                     </div>
                     <div>
-                        <h2 class="text-xl font-black text-gray-900 leading-tight">
-                            {{ order.driver.name if order.driver else "Finding Driver..." }}
+                        <h2 class="text-3xl font-black text-zinc-900 tracking-tighter leading-none mb-3">
+                            {{ order.driver.name if order.driver else "Awaiting Assignment" }}
                         </h2>
-                        <p class="text-[10px] font-black uppercase text-indigo-600 tracking-widest">
-                            {{ order.driver.vehicle_color }} {{ order.driver.vehicle_year }} {{ order.driver.vehicle_type }}
-                        </p>
-                        <p class="text-[9px] font-bold text-gray-400">Plate: {{ order.driver.license_plate }}</p>
+                        <div class="flex flex-col gap-1.5">
+                            <p class="text-[10px] font-black uppercase text-indigo-600 tracking-widest">
+                                {% if order.driver %} Signal Strength: {{ order.driver.signal_strength }}% {% else %} Fleet Deployment Pending {% endif %}
+                            </p>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ID: {{ order.driver.license_plate if order.driver else "FT-HUB-" + order.listing.state[:3].upper() }}</p>
+                        </div>
                     </div>
                 </div>
-                <div class="bg-green-500 text-white px-4 py-2 rounded-2xl font-black text-xs animate-pulse">EN ROUTE</div>
+
+                <div class="bg-zinc-900 rounded-[2.5rem] px-10 py-8 text-center border border-white/10 shadow-2xl relative">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-4 py-1 rounded-full text-[7px] font-black uppercase tracking-[0.3em]">Confidential</div>
+                    <p class="text-[8px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-3">Handshake PIN</p>
+                    <div class="text-5xl font-black text-emerald-400 tracking-[0.4em] animate-pulse">
+                        {{ order.verification_pin }}
+                    </div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                {% if order.driver and order.driver.phone %}
-                <a href="tel:{{ order.driver.phone }}" class="flex items-center justify-center gap-3 bg-indigo-50 text-indigo-600 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-100 transition border border-indigo-100">
-                    <i class="fas fa-phone-alt"></i> Call Driver
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 print:hidden">
+                <a href="{{ url_for('main.download_invoice', order_id=order.id) }}" target="_blank" 
+                   class="flex items-center justify-center gap-4 bg-indigo-50 text-indigo-600 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
+                    <i class="fas fa-file-invoice-dollar"></i> Official Tax Invoice
                 </a>
-                {% else %}
-                <button disabled class="flex items-center justify-center gap-3 bg-gray-50 text-gray-300 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-gray-100 cursor-not-allowed">
-                    Finding Driver
+                <button onclick="window.print()" class="flex items-center justify-center gap-4 bg-zinc-900 text-white py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl">
+                    <i class="fas fa-file-pdf"></i> Handshake Protocol PDF
                 </button>
-                {% endif %}
-
-                <form action="{{ url_for('main.file_dispute', order_id=order.id) }}" method="POST">
-                    <input type="hidden" name="reason" value="EMERGENCY SOS">
-                    <input type="hidden" name="details" value="User triggered emergency alert from tracking map.">
-                    <button type="submit" class="w-full flex items-center justify-center gap-3 bg-red-50 text-red-600 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-100 transition border border-red-100">
-                        ⚠ SOS Alert
-                    </button>
-                </form>
             </div>
 
-            <div class="flex items-center justify-between p-5 bg-gray-50 rounded-2xl mb-4">
-                <div>
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Delivery For</p>
-                    <p class="font-bold text-gray-900">{{ order.listing.title }}</p>
+            <div class="flex items-center justify-center gap-6 py-6 border-t border-gray-100 print:mt-10">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-lock text-emerald-500 text-xs"></i>
+                    <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Liquidity Escrow Locked</p>
                 </div>
-                <div class="text-right">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">ETA</p>
-                    <p class="font-black text-indigo-600">~ 12 MIN</p>
+                <div class="w-px h-4 bg-gray-100"></div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-shield-check text-indigo-500 text-xs"></i>
+                    <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Trybe Protected</p>
                 </div>
             </div>
-            
-            <a href="{{ url_for('main.market') }}" class="block w-full text-center py-4 text-[10px] font-black uppercase text-gray-400 hover:text-black tracking-widest transition">Back to Marketplace</a>
         </div>
     </div>
 </div>
 
+<div id="radar-data" 
+     class="hidden"
+     data-lat="{{ (order.driver.current_lat if order.driver and order.driver.current_lat else 6.5244) }}"
+     data-lng="{{ (order.driver.current_lng if order.driver and order.driver.current_lng else 3.3792) }}"
+     data-active="{{ 'true' if order.driver else 'false' }}">
+</div>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
-    const lagosCoords = [6.5244, 3.3792]; 
-    const map = L.map('map', { zoomControl: false }).setView(lagosCoords, 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    // ... rest of your marker logic ...
+    function dismissSecurity() {
+        document.getElementById('security-modal').classList.add('hidden');
+    }
+
+    /**
+     * 🛰️ HARDENED RADAR INITIALIZATION
+     */
+    const dataNode = document.getElementById('radar-data');
+    const radarConfig = {
+        lat: parseFloat(dataNode.getAttribute('data-lat')),
+        lng: parseFloat(dataNode.getAttribute('data-lng')),
+        active: dataNode.getAttribute('data-active') === 'true'
+    };
+
+    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([radarConfig.lat, radarConfig.lng], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+    
+    if (radarConfig.active) {
+        const vehicleIcon = L.divIcon({
+            className: 'tactical-marker',
+            html: `<div style='background-color:#4F46E5; border:4px solid white; width:22px; height:22px; border-radius:50%; box-shadow: 0 0 30px rgba(79, 70, 229, 0.6);'></div>`
+        });
+        L.marker([radarConfig.lat, radarConfig.lng], {icon: vehicleIcon}).addTo(map);
+    }
 </script>
+
+<style>
+@media print {
+    body * { visibility: hidden; }
+    #receipt-area, #receipt-area * { visibility: visible; }
+    #receipt-area { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: 1px solid #eee; background-color: white !important; }
+    .print\:hidden { display: none !important; }
+}
+.tactical-marker div { animation: signal-pulse 2s infinite; }
+@keyframes signal-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+}
+</style>
 {% endblock %}

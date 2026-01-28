@@ -1,62 +1,92 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-4xl mx-auto px-6 py-12">
-    
-    <div class="flex items-center justify-between mb-8 bg-black text-white p-6 rounded-3xl">
-        <div>
-            <h1 class="text-2xl font-black">Driver Dashboard</h1>
-            <p class="text-gray-400 text-sm">Location: <span class="text-white font-bold">{{ current_user.city }}, {{ current_user.state }}</span></p>
-        </div>
-        <div class="text-right">
-            <div class="text-xs text-gray-400 uppercase font-bold tracking-widest">Wallet</div>
-            <div class="text-2xl font-black text-green-400">₦{{ "{:,.0f}".format(current_user.wallet_balance) }}</div>
+<div class="min-h-screen bg-white font-sans">
+
+    <div class="bg-zinc-900 text-white py-24 md:py-32 px-6 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 40px 40px;"></div>
+        <div class="max-w-5xl mx-auto text-center relative z-10">
+            <span class="bg-emerald-500 text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8 inline-block">Fleet Recruitment Open</span>
+            <h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.9]">
+                Turn your <span class="text-emerald-500 italic">Movement</span> <br> into <span class="text-white underline decoration-emerald-500">Capital.</span>
+            </h1>
+            <p class="text-zinc-400 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-12 leading-relaxed">
+                Join the most secure logistics network in Nigeria. High-value cargo, verified buyers, and instant escrow payouts. 
+            </p>
+            <div class="flex flex-wrap justify-center gap-6">
+                <a href="{{ url_for('auth.register', role='driver') }}" class="bg-white text-black px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all shadow-2xl">
+                    Initialize Onboarding
+                </a>
+                <a href="#how-it-works" class="border border-white/10 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/5 transition-all">
+                    View Protocol
+                </a>
+            </div>
         </div>
     </div>
 
-    <h2 class="text-xl font-bold mb-4">New Delivery Offers</h2>
-    
-    {% if available %}
-    <div class="space-y-4">
-        {% for order in available %}
-        <div class="bg-white border-2 border-gray-100 rounded-2xl p-6 hover:border-black transition shadow-lg relative overflow-hidden">
-            
-            <div class="absolute top-0 right-0 bg-green-500 text-white px-6 py-2 rounded-bl-2xl font-black text-lg">
-                OFFER: ₦{{ "{:,.0f}".format(order.total_price * 0.15) }} 
-                <span class="block text-[8px] font-normal uppercase text-center opacity-80">Non-Negotiable</span>
+    <div class="max-w-7xl mx-auto py-24 px-6">
+        <div class="grid md:grid-cols-3 gap-12 text-center">
+            <div class="space-y-4">
+                <p class="text-xs font-black text-zinc-400 uppercase tracking-widest">Earnings Potential</p>
+                <h3 class="text-5xl font-black tracking-tighter">₦350k<span class="text-emerald-500">+</span></h3>
+                <p class="text-zinc-500 font-medium">Monthly average for top-tier pilots in Lagos and Abuja.</p>
             </div>
+            <div class="space-y-4">
+                <p class="text-xs font-black text-zinc-400 uppercase tracking-widest">Payout Velocity</p>
+                <h3 class="text-5xl font-black tracking-tighter">Instant</h3>
+                <p class="text-zinc-500 font-medium">Funds released to your fleet wallet the moment the PIN is verified.</p>
+            </div>
+            <div class="space-y-4">
+                <p class="text-xs font-black text-zinc-400 uppercase tracking-widest">Trust Index</p>
+                <h3 class="text-5xl font-black tracking-tighter">100%</h3>
+                <p class="text-zinc-500 font-medium">Every buyer and seller is KYC-checked. No ghost orders. No fake signals.</p>
+            </div>
+        </div>
+    </div>
 
-            <div class="flex gap-4">
-                <div class="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center text-2xl">📦</div>
-                <div>
-                    <h3 class="font-bold text-lg">Pickup: {{ order.listing.city }}</h3>
-                    <p class="text-sm text-gray-500 mb-2">Item: {{ order.listing.title }}</p>
-                    
-                    <div class="flex gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        <span><i class="fas fa-map-marker-alt"></i> {{ order.listing.state }}</span>
-                        <span><i class="fas fa-weight-hanging"></i> Light Load</span>
-                    </div>
+    <div id="how-it-works" class="bg-zinc-50 py-24 px-6 border-y border-gray-100">
+        <div class="max-w-7xl mx-auto">
+            <div class="mb-20 text-center">
+                <h2 class="text-4xl font-black tracking-tighter mb-4">The Deployment Protocol.</h2>
+                <p class="text-zinc-400 font-bold uppercase text-[10px] tracking-[0.4em]">Simplified Logistics Engineering</p>
+            </div>
+            
+            
+
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 relative">
+                    <span class="absolute top-8 right-8 text-4xl font-black text-gray-50 italic">01</span>
+                    <h4 class="text-xl font-black mb-3">Register</h4>
+                    <p class="text-zinc-500 text-sm font-medium leading-relaxed">Submit your identity docs and vehicle data. Verification takes < 24 hours.</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 relative">
+                    <span class="absolute top-8 right-8 text-4xl font-black text-gray-50 italic">02</span>
+                    <h4 class="text-xl font-black mb-3">Lock Signal</h4>
+                    <p class="text-zinc-500 text-sm font-medium leading-relaxed">Browse local delivery tasks and accept the ones that fit your route.</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 relative">
+                    <span class="absolute top-8 right-8 text-4xl font-black text-gray-50 italic">03</span>
+                    <h4 class="text-xl font-black mb-3">Escrow Pickup</h4>
+                    <p class="text-zinc-500 text-sm font-medium leading-relaxed">Collect the item. The buyer's funds are already secured in the vault.</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 relative">
+                    <span class="absolute top-8 right-8 text-4xl font-black text-gray-50 italic">04</span>
+                    <h4 class="text-xl font-black mb-3">Handshake</h4>
+                    <p class="text-zinc-500 text-sm font-medium leading-relaxed">Verify the 4-digit PIN at delivery to trigger the instant payout.</p>
                 </div>
             </div>
-
-            <div class="mt-6 flex gap-3">
-                <form action="{{ url_for('main.accept_task', order_id=order.id) }}" method="POST" class="flex-grow">
-                    <button class="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition">
-                        Accept Offer
-                    </button>
-                </form>
-                <button class="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-400 hover:text-red-500 hover:border-red-200 transition">
-                    Decline
-                </button>
-            </div>
         </div>
-        {% endfor %}
     </div>
-    {% else %}
-        <div class="text-center py-12 bg-gray-50 rounded-3xl border border-dashed border-gray-300">
-            <p class="text-gray-500 font-bold">No active orders in {{ current_user.state }} right now.</p>
-            <p class="text-sm text-gray-400">We will alert you when a pickup is close.</p>
-        </div>
-    {% endif %}
 
+    <div class="py-24 px-6">
+        <div class="max-w-5xl mx-auto bg-black rounded-[4rem] p-12 md:p-24 text-center text-white relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full bg-emerald-500/5 blur-[120px]"></div>
+            <h2 class="text-4xl md:text-6xl font-black tracking-tighter mb-8 relative z-10">Ready to command <br> your own fleet?</h2>
+            <p class="text-zinc-400 mb-12 text-lg relative z-10">Limited pilot slots available in the Lagos Island and Ikeja hubs.</p>
+            <a href="{{ url_for('auth.register', role='driver') }}" class="bg-emerald-500 text-black px-12 py-6 rounded-3xl font-black text-xs uppercase tracking-widest hover:scale-110 hover:shadow-[0_0_50px_rgba(16,185,129,0.4)] transition-all relative z-10 inline-block">
+                Start Verification
+            </a>
+        </div>
     </div>
+
+</div>
 {% endblock %}

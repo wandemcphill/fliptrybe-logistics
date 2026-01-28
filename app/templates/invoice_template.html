@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FlipTrybe Handshake Invoice // {{ order.handshake_id }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* 🛰️ PROTOCOL REPAIR: PRINT COLOR & SHADOWS */
+        body { 
+            font-family: 'Urbanist', sans-serif; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; 
+        }
+
+        .invoice-card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Corrected property */
+        }
+
+        @media print {
+            .no-print { display: none; }
+            body { background: white; padding: 0; }
+            .invoice-card { 
+                border: none; 
+                box-shadow: none !important; /* Fixed: 'shadow' to 'box-shadow' */
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-10">
+
+    <div class="no-print max-w-3xl mx-auto mb-8 flex justify-between items-center">
+        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Handshake Transmission Receipt</p>
+        <button onclick="window.print()" class="bg-black text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl">
+            Download PDF Signal
+        </button>
+    </div>
+
+    <div class="invoice-card max-w-3xl mx-auto bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-gray-100">
+        
+        <div class="bg-zinc-900 p-16 text-white flex justify-between items-end relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
+            <div class="relative z-10">
+                <h1 class="text-4xl font-black tracking-tighter mb-2 italic">FlipTrybe.</h1>
+                <p class="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.4em]">Zero-Trust Commerce Layer</p>
+            </div>
+            <div class="text-right relative z-10">
+                <h2 class="text-xl font-black uppercase tracking-widest text-indigo-400">Tax Invoice</h2>
+                <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">No: {{ order.handshake_id }}</p>
+            </div>
+        </div>
+
+        <div class="p-16">
+            <div class="grid grid-cols-2 gap-12 mb-20">
+                <div>
+                    <h4 class="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-4">Origin Node (Seller)</h4>
+                    <p class="text-sm font-black text-gray-900">{{ order.listing.seller.name }}</p>
+                    <p class="text-xs font-medium text-gray-500 mt-1 leading-relaxed">
+                        {{ order.listing.city }}, {{ order.listing.state }} Hub<br>
+                        {{ order.listing.seller.phone }}
+                    </p>
+                </div>
+                <div class="text-right">
+                    <h4 class="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-4">Destination Node (Buyer)</h4>
+                    <p class="text-sm font-black text-gray-900">{{ order.buyer.name }}</p>
+                    <p class="text-xs font-medium text-gray-500 mt-1 leading-relaxed">
+                        {{ order.buyer.address or 'Digital Delivery Point' }}<br>
+                        {{ order.buyer.email }}
+                    </p>
+                </div>
+            </div>
+
+            <table class="w-full mb-20">
+                <thead>
+                    <tr class="border-b-2 border-gray-100">
+                        <th class="text-left pb-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Asset Signal Description</th>
+                        <th class="text-right pb-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Valuation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-50">
+                        <td class="py-8">
+                            <p class="text-sm font-black text-gray-900">{{ order.listing.title }}</p>
+                            <p class="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Protocol: {{ order.listing.section }}</p>
+                        </td>
+                        <td class="py-8 text-right font-black text-gray-900">
+                            ₦{{ "{:,.2f}".format(order.subtotal) }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="flex justify-end">
+                <div class="w-full max-w-xs space-y-4">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Net Subtotal</span>
+                        <span class="font-bold">₦{{ "{:,.2f}".format(order.subtotal) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest">VAT (7.5%)</span>
+                        <span class="font-bold">₦{{ "{:,.2f}".format(order.tax_amount) }}</span>
+                    </div>
+                    <div class="pt-6 border-t border-gray-100 flex justify-between items-center">
+                        <span class="text-xs font-black uppercase text-indigo-600 tracking-widest">Total Liquidity</span>
+                        <span class="text-2xl font-black text-gray-900 tracking-tighter">₦{{ "{:,.2f}".format(order.total_price) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-32 pt-10 border-t border-gray-50 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-200 text-xs rotate-12">
+                        SEAL
+                    </div>
+                    <p class="text-[8px] font-black uppercase text-gray-300 tracking-[0.3em] max-w-[150px] leading-relaxed">
+                        Funds released via PIN authentication at node {{ order.order_date.strftime('%H:%M:%S') }}
+                    </p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[9px] font-black text-gray-900 uppercase tracking-widest">Handshake Verified</p>
+                    <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">Status: {{ order.delivery_status }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-8 text-center border-t border-gray-100">
+            <p class="text-[8px] font-black text-gray-400 uppercase tracking-[0.5em]">
+                Verified by FlipTrybe Escrow Network • Lagos, Nigeria
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

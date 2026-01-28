@@ -1,92 +1,116 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="relative bg-black text-white overflow-hidden rounded-b-[4rem] min-h-[85vh] flex items-center">
+<div class="relative bg-black text-white overflow-hidden rounded-b-[4rem] min-h-[90vh] flex items-center">
     
     <div class="absolute inset-0 z-0">
         <img src="https://i.postimg.cc/Kz74nMCW/bg.png" 
-             class="w-full h-full object-cover opacity-50" 
+             class="w-full h-full object-cover opacity-60 scale-105" 
              alt="FlipTrybe Background">
-        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/80"></div>
     </div>
 
-    <div class="relative z-10 max-w-6xl mx-auto px-6 text-center mt-10">
-        <span class="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-black tracking-[0.3em] uppercase mb-6 animate-pulse">
+    <div class="relative z-10 max-w-7xl mx-auto px-6 text-center pt-20">
+        <div class="inline-flex items-center gap-2 py-2 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-black tracking-[0.2em] uppercase mb-8 hover:bg-white/20 transition cursor-default">
+            <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
             Logistics • Escrow • Trust
-        </span>
+        </div>
         
-        <h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-6 leading-none drop-shadow-2xl">
+        <h1 class="text-6xl md:text-9xl font-black tracking-tighter mb-8 leading-[0.9] drop-shadow-2xl">
             Move Money.<br>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-white to-indigo-400">Move Goods.</span>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-white to-indigo-400 animate-gradient">Move Goods.</span>
         </h1>
         
-        <p class="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto mb-12 font-medium drop-shadow-md">
+        <p class="text-gray-400 text-lg md:text-2xl max-w-3xl mx-auto mb-16 font-medium leading-relaxed">
             The first marketplace that protects your money until the item is in your hands. 
-            Safe payments. Verified Drivers. Instant Trust.
+            <span class="text-white">Safe payments. Verified Drivers. Instant Trust.</span>
         </p>
         
-        <div class="flex flex-col md:flex-row items-center justify-center gap-4">
-            <a href="{{ url_for('main.market') }}" class="w-full md:w-auto bg-white text-black px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition shadow-[0_0_40px_rgba(255,255,255,0.3)]">
-                Buy / Sell
+        <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+            <a href="{{ url_for('main.market') }}" class="group w-full md:w-auto bg-white text-black px-10 py-5 rounded-full font-black uppercase tracking-widest hover:scale-105 transition shadow-[0_0_50px_rgba(255,255,255,0.2)] flex items-center justify-center gap-3">
+                Start Trading <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
             </a>
 
             {% if not current_user.is_authenticated %}
-            <a href="{{ url_for('auth.register', role='agent') }}" class="w-full md:w-auto bg-indigo-600 text-white border border-indigo-500/30 px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition">
-                Become Agent
-            </a>
-            
-            <a href="{{ url_for('auth.register', role='driver') }}" class="w-full md:w-auto bg-transparent border-2 border-white text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-white hover:text-black transition">
-                Drive for Us
-            </a>
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('auth.register', role='agent') }}" class="px-8 py-5 rounded-full border border-white/20 text-white font-bold hover:bg-white/10 transition backdrop-blur-md">
+                    Become Agent
+                </a>
+                <a href="{{ url_for('auth.register', role='driver') }}" class="px-8 py-5 rounded-full bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-900/50">
+                    Drive
+                </a>
+            </div>
             {% endif %}
         </div>
     </div>
 </div>
 
-<div class="max-w-7xl mx-auto px-6 py-20">
-    <div class="flex items-center justify-between mb-12">
-        <h2 class="text-3xl font-black text-gray-900 tracking-tight">Fresh Drops</h2>
-        <a href="{{ url_for('main.market') }}" class="text-sm font-bold text-indigo-600 hover:text-black transition">View Market <i class="fas fa-arrow-right ml-2"></i></a>
+<div class="max-w-7xl mx-auto px-6 py-24">
+    <div class="flex items-end justify-between mb-16">
+        <div>
+            <h2 class="text-4xl font-black text-gray-900 tracking-tight mb-2">Fresh Drops</h2>
+            <p class="text-gray-500 font-medium">Verified items added today.</p>
+        </div>
+        <a href="{{ url_for('main.market') }}" class="group flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-black transition">
+            View Market <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+        </a>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {% for item in items %}
-        <div class="group bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
-            <div class="h-64 overflow-hidden relative">
-                {% if item.image_filename %}
-                <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
-                {% else %}
-                <div class="w-full h-full bg-gray-50 flex items-center justify-center text-gray-400 font-black italic">NO IMG</div>
-                {% endif %}
-                <div class="absolute bottom-4 left-4">
-                    <span class="bg-black/80 backdrop-blur text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">
-                        {{ item.category }}
-                    </span>
+        <a href="{{ url_for('main.product_detail', listing_id=item.id) }}" class="group block">
+            <div class="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 h-full flex flex-col">
+                <div class="h-72 overflow-hidden relative bg-gray-100">
+                    {% if item.image_filename %}
+                    <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 ease-in-out">
+                    {% else %}
+                    <div class="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300 font-black italic">NO IMAGE</div>
+                    {% endif %}
+                    
+                    <div class="absolute bottom-4 left-4 flex gap-2">
+                        <span class="bg-white/90 backdrop-blur text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                            {{ item.category }}
+                        </span>
+                        {% if item.section == 'shortlet' %}
+                        <span class="bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                            Shortlet
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="p-8 mt-auto">
+                    <h3 class="font-bold text-lg text-gray-900 truncate mb-2 group-hover:text-indigo-600 transition">{{ item.title }}</h3>
+                    <div class="flex justify-between items-center">
+                        <p class="text-xl font-black text-gray-900">₦{{ "{:,.0f}".format(item.price) }}</p>
+                        <span class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-black group-hover:text-white transition">
+                            <i class="fas fa-arrow-up rotate-45 text-xs"></i>
+                        </span>
+                    </div>
                 </div>
             </div>
-            <div class="p-6">
-                <h3 class="font-bold text-gray-900 truncate mb-1">{{ item.title }}</h3>
-                <p class="text-indigo-600 font-black">₦{{ "{:,.0f}".format(item.price) }}</p>
-            </div>
-        </div>
-        {% endfor %} </div>
+        </a>
+        {% endfor %}
+    </div>
 </div>
 
-<div class="bg-gray-900 text-white py-20 rounded-[3rem] mx-4 mb-12">
-    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-12 text-center">
-        <div>
-            <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">🛍️</div>
-            <h3 class="font-bold text-xl mb-2">You Pay</h3>
-            <p class="text-gray-400 text-sm">Funds are held safely in our Escrow Vault. The seller gets nothing yet.</p>
+<div class="bg-black text-white py-24 rounded-[3rem] mx-4 mb-12 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#4f46e5 1px, transparent 1px); background-size: 30px 30px;"></div>
+    
+    <div class="relative z-10 max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-16 text-center">
+        <div class="group">
+            <div class="w-20 h-20 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center mx-auto mb-8 text-3xl group-hover:scale-110 transition duration-500 shadow-[0_0_30px_rgba(255,255,255,0.1)]">🛍️</div>
+            <h3 class="font-bold text-2xl mb-3">You Pay</h3>
+            <p class="text-gray-400 text-sm leading-relaxed px-4">Funds are held safely in our Escrow Vault. The seller gets nothing until you approve.</p>
         </div>
-        <div>
-            <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">🚚</div>
-            <h3 class="font-bold text-xl mb-2">We Deliver</h3>
-            <p class="text-gray-400 text-sm">A verified FlipTrybe driver picks up and brings the item to you.</p>
+        <div class="group">
+            <div class="w-20 h-20 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center mx-auto mb-8 text-3xl group-hover:scale-110 transition duration-500 shadow-[0_0_30px_rgba(255,255,255,0.1)]">🚚</div>
+            <h3 class="font-bold text-2xl mb-3">We Deliver</h3>
+            <p class="text-gray-400 text-sm leading-relaxed px-4">A verified FlipTrybe driver picks up the item and brings it directly to your doorstep.</p>
         </div>
-        <div>
-            <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">✅</div>
-            <h3 class="font-bold text-xl mb-2">You Verify</h3>
-            <p class="text-gray-400 text-sm">Inspect the item. Share your PIN. The seller gets paid instantly.</p>
+        <div class="group">
+            <div class="w-20 h-20 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center mx-auto mb-8 text-3xl group-hover:scale-110 transition duration-500 shadow-[0_0_30px_rgba(255,255,255,0.1)]">✅</div>
+            <h3 class="font-bold text-2xl mb-3">You Verify</h3>
+            <p class="text-gray-400 text-sm leading-relaxed px-4">Inspect the item. Share your PIN. The seller gets paid instantly. Zero risk.</p>
         </div>
     </div>
 </div>

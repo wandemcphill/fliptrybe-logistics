@@ -1,96 +1,97 @@
-import os
-from flask import Blueprint, render_template, redirect, url_for, request, flash
-from werkzeug.security import generate_password_hash, check_password_hash
+import os, secrets
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from werkzeug.utils import secure_filename
 from flask_login import login_user, logout_user, login_required, current_user
-from .models import db, User
+from app import db, bcrypt
+from app.models import User
+from app.forms import RegistrationForm, LoginForm
 
 auth = Blueprint('auth', __name__)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        remember = True if request.form.get('remember') else False
-        user = User.query.filter_by(email=email).first()
-        if not user or not check_password_hash(user.password, password):
-            flash('Invalid credentials.', 'error')
-            return redirect(url_for('auth.login'))
-        login_user(user, remember=remember)
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
         
-        # Route based on Role
-        if user.is_admin: return redirect(url_for('main.admin_dashboard'))
-        elif user.is_driver: return redirect(url_for('main.driver_dashboard'))
-        elif user.is_agent: return redirect(url_for('main.agent_office'))
-        else: return redirect(url_for('main.dashboard'))
-    return render_template('login.html')
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data.lower()).first()
+        if user and bcrypt.check_password_hash(user.password, form.password.data):
+            # 🛡️ Establish secure session
+            login_user(user, remember=form.remember.data)
+            
+            flash(f"Transmission Established. Welcome, {user.name}.", "success")
+            
+            # 🛰️ Dynamic Routing Logic
+            next_page = request.args.get('next')
+            if next_page: return redirect(next_page)
+            if user.is_admin: return redirect(url_for('admin.admin_panel'))
+            if user.is_driver: return redirect(url_for('main.pilot_console'))
+            return redirect(url_for('main.dashboard'))
+        else:
+            flash('Login Failed. Identity mismatch or invalid key.', 'error')
+            
+    return render_template('login.html', title='Login', form=form)
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        role = request.form.get('role')
-
-        if User.query.filter_by(email=email).first():
-            flash('Email already exists.', 'error')
-            return redirect(url_for('auth.register'))
-
-        # 📂 UNIVERSAL FILE SAVER HELPER
-        def save_file(file_obj, prefix):
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+        
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        
+        def save_kyc_file(file_obj, prefix):
             if file_obj and file_obj.filename:
-                fname = secure_filename(f"{prefix}_{email}_{file_obj.filename}")
-                path = os.path.join(os.getcwd(), 'app', 'static', 'uploads')
+                random_hex = secrets.token_hex(4)
+                fname = secure_filename(f"{prefix}_{random_hex}_{file_obj.filename}")
+                # 🛠️ Use root_path to ensure relative stability on production servers
+                path = os.path.join(current_app.root_path, 'static', 'uploads', 'kyc')
                 os.makedirs(path, exist_ok=True)
                 file_obj.save(os.path.join(path, fname))
                 return fname
             return None
 
-        # 📸 Save Files
-        kyc_selfie = save_file(request.files.get('kyc_selfie'), "SELFIE")
-        kyc_id = save_file(request.files.get('kyc_id_card'), "ID")
-        kyc_video = save_file(request.files.get('kyc_video'), "VIDEO")
-        kyc_plate = save_file(request.files.get('kyc_plate'), "PLATE")
+        # 📸 Tactical File Handling (KYC)
+        kyc_selfie = save_kyc_file(request.files.get('kyc_selfie'), "SELFIE")
+        kyc_id = save_kyc_file(request.files.get('kyc_id_card'), "ID")
+        kyc_video = save_kyc_file(request.files.get('kyc_video'), "VIDEO")
+        kyc_plate = save_kyc_file(request.files.get('kyc_plate'), "PLATE")
+
+        # 🔐 Signal Sanitization: Ensure phone is just numbers for Termii
+        phone_raw = request.form.get('phone', '')
+        sanitized_phone = ''.join(filter(str.isdigit, phone_raw))
+
+        hashed_pw = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
 
         new_user = User(
-            email=email,
+            username=form.username.data.lower(),
+            email=form.email.data.lower(),
             name=request.form.get('name'),
-            password=generate_password_hash(request.form.get('password'), method='sha256'),
-            
-            # Contact & Location
-            phone=request.form.get('phone'),
-            whatsapp=request.form.get('whatsapp'),
-            mobile_2=request.form.get('mobile_2'),
-            whatsapp_2=request.form.get('whatsapp_2'),
+            password=hashed_pw,
+            phone=sanitized_phone,
             address=request.form.get('address'),
             state=request.form.get('state'),
             city=request.form.get('city'),
-
-            # Roles
-            is_agent=(role == 'agent'),
-            is_driver=(role == 'driver'),
-            is_admin=False,
-
-            # KYC Files
+            role=form.role.data,
+            is_driver=(form.role.data == 'driver'),
             kyc_selfie=kyc_selfie,
             kyc_id_card=kyc_id,
             kyc_video=kyc_video,
             kyc_plate=kyc_plate,
-            
-            # Default Profile Pic is the Selfie
-            profile_pic=kyc_selfie
+            image_file=kyc_selfie if kyc_selfie else 'default.jpg'
         )
 
         db.session.add(new_user)
         db.session.commit()
-        flash('Registration successful! Please login.', 'success')
+        
+        flash('Identity Registered. Terminal access granted.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('signup.html')
+    return render_template('signup.html', title='Register', form=form)
 
 @auth.route('/logout')
-@login_required
 def logout():
     logout_user()
+    flash("Signal Terminated. Securely logged out.", "success")
     return redirect(url_for('main.index'))
-    

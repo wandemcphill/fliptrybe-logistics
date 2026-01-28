@@ -1,6 +1,38 @@
-instance/
-__pycache__/
-*.db
-.env
+# --- Virtual Environments ---
 venv/
+env/
+ENV/
+.env
+
+# --- Flask & Database ---
+instance/
+*.db
+*.sqlite
+.webassets-cache
+
+# --- Python System Files ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+
+# --- Media & Assets (CRITICAL) ---
+# We ignore the contents of uploads, but keep the folder
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+# --- OS Specific ---
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# --- IDEs ---
+.vscode/
+.idea/
+*.swp

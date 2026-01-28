@@ -3,91 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlipTrybe - Safe Marketplace</title>
+    <title>FlipTrybe — Secure Escrow Marketplace</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Urbanist', sans-serif; }
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
+        body { font-family: 'Urbanist', sans-serif; scroll-behavior: smooth; }
+        
+        /* 🧊 Glassmorphism Protocol */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        /* 📟 Industrial Marquee Logic */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            animation: marquee 50s linear infinite;
+            width: max-content;
+        }
+
+        /* 🧪 Tactical Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #FAFAFA; }
+        ::-webkit-scrollbar-thumb { background: #000; border-radius: 10px; }
+
+        .nav-link { position: relative; transition: all 0.3s ease; }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: #4F46E5;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        @keyframes signal-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .pulse-emerald { animation: signal-pulse 2s infinite; }
     </style>
 </head>
-<body class="bg-gray-50 flex flex-col min-h-screen">
+<body class="bg-[#FAFAFA] flex flex-col min-h-screen text-gray-900 selection:bg-indigo-100 selection:text-indigo-900">
 
-    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50 border-b border-gray-100">
-        <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-            <a href="{{ url_for('main.index') }}" class="text-2xl font-black tracking-tighter flex items-center gap-2">
-                <span class="bg-black text-white px-2 py-1 rounded-lg">F</span> FlipTrybe
+    <nav class="glass-nav fixed w-full z-[100] border-b border-gray-100 transition-all duration-500">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="{{ url_for('main.market') }}" class="text-2xl font-black tracking-tighter flex items-center gap-3 group">
+                <div class="bg-black text-white w-10 h-10 flex items-center justify-center rounded-2xl group-hover:rotate-6 transition-transform duration-300 shadow-xl">FT</div>
+                <span class="hidden sm:block">FlipTrybe.</span>
             </a>
 
-            <div class="hidden md:flex items-center gap-6 text-sm font-bold text-gray-600">
-                <a href="{{ url_for('main.market') }}" class="hover:text-black transition">Marketplace</a>
-                
+            <div class="hidden lg:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
+                <a href="{{ url_for('main.market') }}" class="nav-link text-gray-900">Marketplace</a>
                 {% if current_user.is_authenticated %}
-                    {% if current_user.is_agent %}
-                        <a href="{{ url_for('main.agent_office') }}" class="hover:text-black">Agent Office</a>
-                    {% endif %}
-                    
                     {% if current_user.is_driver %}
-                        <a href="{{ url_for('main.driver_dashboard') }}" class="hover:text-black">Logistics</a>
+                        <a href="{{ url_for('main.pilot_console') }}" class="nav-link text-indigo-600">Pilot Cockpit</a>
                     {% endif %}
-                    
                     {% if current_user.is_admin %}
-                        <a href="{{ url_for('main.admin_dashboard') }}" class="text-red-600 hover:text-red-800">
-                            <i class="fas fa-crown"></i> Admin
+                        <a href="{{ url_for('admin.admin_panel') }}" class="flex items-center gap-2 text-rose-600 font-black hover:scale-105 transition-transform">
+                            <i class="fas fa-shield-check text-xs"></i> HQ Command
                         </a>
                     {% endif %}
+                {% endif %}
+            </div>
 
-                    <a href="{{ url_for('main.dashboard') }}" class="bg-black text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition">
-                        My Wallet
-                    </a>
-                    
-                    <a href="{{ url_for('main.inbox') }}" class="text-gray-400 hover:text-black relative" title="Messages">
-                        <i class="fas fa-comment-alt text-lg"></i>
+            <div class="flex items-center gap-5">
+                {% if current_user.is_authenticated %}
+                    <div class="relative group">
+                        <button class="relative w-11 h-11 flex items-center justify-center bg-gray-50 rounded-2xl hover:bg-zinc-900 hover:text-white transition-all">
+                            <i class="fas fa-bell text-gray-400 group-hover:text-white transition-colors"></i>
+                            {% set unread = current_user.notifications.filter_by(read=False).count() %}
+                            {% if unread > 0 %}
+                            <span class="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white pulse-red">{{ unread }}</span>
+                            {% endif %}
+                        </button>
+                    </div>
+
+                    <a href="{{ url_for('main.dashboard') }}" class="hidden md:flex items-center gap-3 bg-black text-white px-5 py-2.5 rounded-2xl hover:bg-zinc-800 transition shadow-xl">
+                        <span class="text-[9px] font-black uppercase tracking-widest opacity-50">Liquidity</span>
+                        <span class="font-bold">₦{{ "{:,.0f}".format(current_user.wallet_balance) }}</span>
                     </a>
 
-                    <a href="{{ url_for('main.settings') }}" class="text-gray-400 hover:text-black" title="Settings">
-                        <i class="fas fa-cog text-lg"></i>
+                    <a href="{{ url_for('main.settings') }}" class="w-11 h-11 rounded-2xl overflow-hidden border-2 border-gray-100 hover:border-black transition-all">
+                        <img src="{{ url_for('static', filename='uploads/' + current_user.image_file) }}" class="w-full h-full object-cover">
                     </a>
-
-                    <a href="{{ url_for('auth.logout') }}" class="text-gray-400 hover:text-black">Logout</a>
                 {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="text-black">Login</a>
-                    <a href="{{ url_for('auth.register') }}" class="bg-black text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition">
-                        Join the Tribe
-                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="text-[10px] font-black uppercase tracking-widest px-4 hover:text-indigo-600 transition">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="bg-black text-white px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition shadow-2xl">Join Tribe</a>
                 {% endif %}
             </div>
         </div>
     </nav>
 
-    <div class="pt-24 px-4 max-w-xl mx-auto z-40 relative">
+    <div class="fixed top-20 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 z-[90] overflow-hidden py-2.5">
+        <div class="flex animate-marquee gap-10 items-center">
+            {% for signal in activity_signals %}
+                <span class="text-[8px] font-black uppercase tracking-[0.2em] flex items-center gap-3 whitespace-nowrap">
+                    <span class="w-1.5 h-1.5 rounded-full {% if signal.type == 'handshake' %}bg-emerald-500 pulse-emerald{% else %}bg-indigo-500{% endif %}"></span>
+                    <span class="{% if signal.type == 'handshake' %}text-zinc-900{% else %}text-zinc-400{% endif %}">
+                        {{ signal.msg }}
+                    </span>
+                </span>
+            {% endfor %}
+            {% for signal in activity_signals %}
+                <span class="text-[8px] font-black uppercase tracking-[0.2em] flex items-center gap-3 whitespace-nowrap">
+                    <span class="w-1.5 h-1.5 rounded-full {% if signal.type == 'handshake' %}bg-emerald-500 pulse-emerald{% else %}bg-indigo-500{% endif %}"></span>
+                    <span class="{% if signal.type == 'handshake' %}text-zinc-900{% else %}text-zinc-400{% endif %}">
+                        {{ signal.msg }}
+                    </span>
+                </span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="fixed top-36 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-[110]">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="p-4 rounded-xl mb-4 text-sm font-bold shadow-lg
-                        {% if category == 'success' %} bg-green-100 text-green-700 border border-green-200
-                        {% else %} bg-red-100 text-red-700 border border-red-200 {% endif %}">
-                        {{ message }}
+                    <div class="flex items-center gap-4 p-5 rounded-[2rem] mb-4 text-[10px] font-black uppercase tracking-widest shadow-2xl border backdrop-blur-3xl
+                        {% if category == 'success' %} bg-white/90 text-emerald-600 border-emerald-100
+                        {% else %} bg-white/90 text-rose-600 border-rose-100 {% endif %}">
+                        <i class="fas {% if category == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} text-lg"></i>
+                        <span class="flex-grow">{{ message }}</span>
+                        <button onclick="this.parentElement.remove()" class="opacity-30 hover:opacity-100 transition"><i class="fas fa-times"></i></button>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
     </div>
 
-    <div class="flex-grow">
+    <main class="flex-grow pt-32">
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
-    <footer class="bg-black text-white py-12 mt-12">
-        <div class="max-w-6xl mx-auto px-6 text-center">
-            <h2 class="text-2xl font-black tracking-tighter mb-4">FlipTrybe.</h2>
-            <p class="text-gray-500 text-sm">Abuja • Lagos • Port Harcourt</p>
-            <p class="text-gray-700 text-xs mt-8">© 2026 FlipTrybe Nigeria Ltd.</p>
+    <footer class="bg-white border-t border-gray-100 pt-24 pb-12 mt-32">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center pt-12 border-t border-gray-50 gap-8">
+                <p class="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-300">© 2026 FlipTrybe Nigeria Ltd • Engineering Excellence</p>
+            </div>
         </div>
     </footer>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('h-16'); nav.classList.remove('h-20');
+            } else {
+                nav.classList.add('h-20'); nav.classList.remove('h-16');
+            }
+        });
+    </script>
 </body>
 </html>

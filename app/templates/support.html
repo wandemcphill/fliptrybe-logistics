@@ -1,51 +1,132 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-4xl mx-auto px-6 py-16">
-    <div class="text-center mb-16">
-        <h1 class="text-4xl font-black text-gray-900 mb-4">How can we help?</h1>
-        <p class="text-gray-500">Our tribe support team is available 24/7 in Lagos and Abuja.</p>
+
+{% with messages = get_flashed_messages(category_filter=["success"]) %}
+  {% if 'SIGNAL_CONFIRMED' in messages %}
+  <div id="success-overlay" class="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40 animate-in fade-in duration-500">
+      <div class="bg-white rounded-[4rem] p-12 max-w-lg w-full text-center shadow-[0_0_100px_rgba(0,0,0,0.1)] scale-in-center border border-gray-100">
+          <div class="w-24 h-24 bg-emerald-500 text-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-500/40 rotate-12">
+              <i class="fas fa-check-double text-4xl"></i>
+          </div>
+          <h2 class="text-4xl font-black text-gray-900 tracking-tighter mb-4">Signal Received.</h2>
+          <p class="text-gray-400 font-medium leading-relaxed mb-10">
+              Your support ticket has been encrypted and dispatched to our resolution unit. We will stabilize the transmission within 120 minutes.
+          </p>
+          <button onclick="document.getElementById('success-overlay').remove()" 
+                  class="w-full bg-black text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-indigo-600 transition-all duration-300">
+              Acknowledge & Return
+          </button>
+      </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
+<div class="max-w-6xl mx-auto px-6 py-24">
+    
+    <div class="text-center mb-24 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div class="flex items-center justify-center gap-3 mb-6">
+            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
+            <p class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em]">Signal Status: Active</p>
+        </div>
+        <h1 class="text-6xl md:text-7xl font-black text-gray-900 tracking-tighter mb-6">Support Terminal.</h1>
+        <p class="text-gray-400 font-medium max-w-xl mx-auto text-lg leading-relaxed">
+            Our resolution engineering team is online. 
+            Dispatching assistance across Lagos, Abuja, and Port Harcourt hubs.
+        </p>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-12">
-        <div class="bg-white border border-gray-100 p-8 rounded-[3rem] shadow-xl">
-            <h2 class="text-xl font-bold mb-6">Send us a message</h2>
-            <form action="{{ url_for('main.support') }}" method="POST" class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-4 mb-2 block">Your Email</label>
-                    <input type="email" name="email" required class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-black outline-none">
+    <div class="grid lg:grid-cols-12 gap-16 items-start">
+        
+        <div class="lg:col-span-7">
+            <div class="bg-white border border-gray-100 p-12 rounded-[4rem] shadow-2xl shadow-gray-200/50 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-5">
+                    <i class="fas fa-network-wired text-9xl text-black"></i>
                 </div>
-                <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-4 mb-2 block">Subject</label>
-                    <select name="subject" class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer">
-                        <option>General Inquiry</option>
-                        <option>Payment Issue</option>
-                        <option>Report Fraud</option>
-                        <option>Agent Application</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-4 mb-2 block">Message</label>
-                    <textarea name="message" rows="4" required class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-black outline-none"></textarea>
-                </div>
-                <button class="w-full bg-black text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-800 transition shadow-lg">
-                    Send Ticket
-                </button>
-            </form>
+
+                <h2 class="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 mb-10 flex items-center gap-3">
+                    <i class="fas fa-paper-plane text-[10px]"></i>
+                    Initialize Support Signal
+                </h2>
+
+                <form action="{{ url_for('main.support') }}" method="POST" class="space-y-10 relative z-10">
+                    <div class="space-y-8">
+                        <div>
+                            <span class="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em] mb-4 block">01 // Identity Context</span>
+                            <div class="group">
+                                <label class="text-[10px] font-black uppercase text-gray-400 ml-1 mb-2 block tracking-widest">Origin Email</label>
+                                <input type="email" name="email" value="{{ current_user.email if current_user.is_authenticated else '' }}" required 
+                                       placeholder="identity@fliptrybe.com"
+                                       class="w-full bg-gray-50 border border-transparent rounded-2xl px-6 py-5 font-bold text-gray-900 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-100 outline-none transition-all duration-300">
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em] mb-4 block">02 // Issue Classification</span>
+                            <div class="group relative">
+                                <label class="text-[10px] font-black uppercase text-gray-400 ml-1 mb-2 block tracking-widest">Issue Vector</label>
+                                <select name="subject" class="w-full bg-gray-50 border border-transparent rounded-2xl px-6 py-5 font-bold text-gray-900 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-100 outline-none appearance-none cursor-pointer">
+                                    <option>General Market Inquiry</option>
+                                    <option>Escrow & Payout Logic</option>
+                                    <option>Security / Fraud Report</option>
+                                    <option>Logistics & Dispatch</option>
+                                    <option>Agent Onboarding</option>
+                                </select>
+                                <div class="absolute right-6 bottom-6 text-gray-300 pointer-events-none">
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em] mb-4 block">03 // Signal Payload</span>
+                            <div class="group">
+                                <label class="text-[10px] font-black uppercase text-gray-400 ml-1 mb-2 block tracking-widest">Detailed Report</label>
+                                <textarea name="message" rows="5" required placeholder="Describe the discrepancy or technical request..." 
+                                          class="w-full bg-gray-50 border border-transparent rounded-3xl px-6 py-5 font-medium text-gray-900 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-100 outline-none transition-all duration-300 resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-black text-white py-6 rounded-3xl font-black text-[11px] uppercase tracking-[0.3em] hover:bg-indigo-600 hover:shadow-2xl hover:shadow-indigo-100 transition-all duration-500 active:scale-95">
+                        Transmit Ticket to HQ
+                    </button>
+                </form>
+            </div>
         </div>
 
-        <div class="flex flex-col justify-center space-y-8">
-            <div class="bg-indigo-50 p-8 rounded-[2rem] border border-indigo-100">
-                <i class="fas fa-envelope text-3xl text-indigo-600 mb-4"></i>
-                <h3 class="font-bold text-lg mb-2">Email Support</h3>
-                <p class="text-gray-600 text-sm mb-4">For urgent inquiries regarding escrow or logistics.</p>
-                <a href="mailto:help@fliptrybe.com" class="text-indigo-600 font-black underline">help@fliptrybe.com</a>
+        <div class="lg:col-span-5 flex flex-col gap-8">
+            <div class="group bg-white border border-gray-100 p-10 rounded-[3.5rem] hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-500 border-l-4 border-l-indigo-600">
+                <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                    <i class="fas fa-shield-check text-xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-gray-900 mb-2">Escrow Desk</h3>
+                <p class="text-gray-400 font-medium text-sm leading-relaxed mb-6">
+                    Direct access to our financial resolution team for escrow holding and payout verifications.
+                </p>
+                <a href="mailto:ops@fliptrybe.com" class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 hover:text-black transition flex items-center gap-2">
+                    ops@fliptrybe.com <i class="fas fa-arrow-right"></i>
+                </a>
             </div>
 
-            <div class="bg-green-50 p-8 rounded-[2rem] border border-green-100">
-                <i class="fab fa-whatsapp text-3xl text-green-600 mb-4"></i>
-                <h3 class="font-bold text-lg mb-2">WhatsApp Line</h3>
-                <p class="text-gray-600 text-sm mb-4">Chat with our dispatch team instantly.</p>
-                <a href="#" class="text-green-600 font-black underline">+234 800 FLIP TRYBE</a>
+            <div class="group bg-zinc-900 text-white p-10 rounded-[3.5rem] hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500 border-l-4 border-l-emerald-500">
+                <div class="w-14 h-14 bg-emerald-500 text-black rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
+                    <i class="fab fa-whatsapp text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-black mb-2 tracking-tight">Tactical Dispatch</h3>
+                <p class="text-zinc-500 font-medium text-sm leading-relaxed mb-6">
+                    Real-time WhatsApp support for active deliveries and logistics emergencies.
+                </p>
+                <a href="https://wa.me/234XXXXXXXXXX" class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 hover:text-white transition flex items-center gap-2">
+                    Connect to Dispatch <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 flex items-center gap-6">
+                <i class="fas fa-shield-halved text-gray-300 text-3xl"></i>
+                <div>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">FlipTrybe Protocol</p>
+                    <p class="text-xs font-bold text-gray-600 leading-tight">All transmissions are logged and encrypted for tribe safety.</p>
+                </div>
             </div>
         </div>
     </div>

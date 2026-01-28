@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-7xl mx-auto py-16 px-6 lg:px-12 bg-white rounded-[4rem] shadow-2xl my-12">
+    <div class="grid lg:grid-cols-12 gap-16">
+        
+        <div class="lg:col-span-4 border-r border-gray-100 pr-12">
+            <div class="text-center mb-10">
+                <div class="w-32 h-32 bg-zinc-900 rounded-[3rem] mx-auto mb-6 flex items-center justify-center text-white text-4xl font-black">
+                    {{ current_user.name[0] }}
+                </div>
+                <h2 class="text-2xl font-black text-zinc-900">{{ current_user.name }}</h2>
+                <span class="text-[9px] font-black uppercase tracking-widest {{ 'text-emerald-500' if current_user.is_verified else 'text-amber-500' }}">
+                    Status: {{ current_user.kyc_status }}
+                </span>
+            </div>
+
+            <form action="{{ url_for('main.profile') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <div>
+                    <label class="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-2">Selfie Verification</label>
+                    <input type="file" name="kyc_selfie" class="w-full text-xs text-gray-400 file:bg-zinc-900 file:text-white file:border-none file:px-4 file:py-2 file:rounded-xl">
+                </div>
+                <div>
+                    <label class="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-2">ID Card (Front)</label>
+                    <input type="file" name="kyc_id_card" class="w-full text-xs text-gray-400 file:bg-zinc-900 file:text-white file:border-none file:px-4 file:py-2 file:rounded-xl">
+                </div>
+                <button type="submit" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all">Submit for Vetting</button>
+            </form>
+        </div>
+
+        <div class="lg:col-span-8">
+            <div class="bg-zinc-900 p-10 rounded-[3.5rem] text-white mb-12 flex justify-between items-center shadow-2xl">
+                <div>
+                    <p class="text-[9px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-2">Tribe Liquidity</p>
+                    <h3 class="text-5xl font-black tracking-tighter">₦{{ "{:,.0f}".format(current_user.wallet_balance) }}</h3>
+                </div>
+                <button class="bg-white text-black px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">Add Funds</button>
+            </div>
+
+            <h3 class="text-xs font-black text-zinc-400 uppercase tracking-[0.3em] mb-8">Transmission Ledger</h3>
+            <div class="space-y-4">
+                {% for entry in history %}
+                <div class="flex justify-between items-center p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-zinc-900 shadow-sm">
+                            <i class="fas {{ 'fa-arrow-down' if entry.type == 'Sale' else 'fa-arrow-up' }}"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-black text-zinc-900">{{ entry.type }}</p>
+                            <p class="text-[8px] font-bold text-gray-400">{{ entry.timestamp.strftime('%b %d, %H:%M') }}</p>
+                        </div>
+                    </div>
+                    <p class="text-sm font-black {{ 'text-emerald-500' if entry.type == 'Sale' else 'text-rose-500' }}">
+                        {{ '+' if entry.type == 'Sale' else '-' }}₦{{ "{:,.0f}".format(entry.amount) }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

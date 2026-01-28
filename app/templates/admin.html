@@ -1,122 +1,209 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-7xl mx-auto py-12 px-6">
+<div class="bg-gray-50 min-h-screen pb-32 font-sans selection:bg-indigo-100 selection:text-indigo-900">
     
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
-            <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Gross Volume</p>
-            <h2 class="text-3xl font-black">₦{{ "{:,.0f}".format(stats.gross_volume) }}</h2> [cite: 43]
-        </div>
-        
-        <div class="bg-indigo-50 p-8 rounded-[2.5rem] shadow-sm border border-indigo-100">
-            <p class="text-[10px] font-black uppercase text-indigo-600 mb-2">Net Revenue (5%)</p>
-            <h2 class="text-3xl font-black text-indigo-700">₦{{ "{:,.0f}".format(stats.net_revenue) }}</h2> [cite: 43]
-        </div>
+    <div class="bg-white border-b border-gray-100 sticky top-0 z-[100] backdrop-blur-md">
+        <div class="max-w-7xl auto px-6 py-6 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-zinc-900 rounded-2xl flex items-center justify-center text-white shadow-xl">
+                    <i class="fas fa-tower-broadcast text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-zinc-900 tracking-tighter">HQ <span class="text-indigo-600">Command</span></h1>
+                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Sovereign Administration</p>
+                </div>
+            </div>
 
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
-            <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Total Tribe</p>
-            <h2 class="text-3xl font-black">{{ stats.user_count }}</h2> [cite: 44]
-        </div>
-        
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
-            <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Pending Tasks</p>
-            <h2 class="text-3xl font-black text-orange-500">{{ stats.pending_tasks }}</h2> [cite: 45]
+            <div class="flex items-center gap-4">
+                <button onclick="toggleModal('broadcast-modal')" class="bg-black text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg">Broadcast</button>
+                <a href="{{ url_for('admin.pilot_report') }}" class="bg-indigo-600 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-900 transition-all shadow-lg">Velocity Report</a>
+                <div class="px-8 py-2 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
+                    <p class="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Tribe Revenue</p>
+                    <p class="text-sm font-black text-emerald-600">₦{{ "{:,.0f}".format(tribe_revenue) }}</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="grid lg:grid-cols-3 gap-10">
-        <div class="lg:col-span-2 bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-8 border-b font-bold text-xl flex justify-between items-center">
-                Live Transaction Feed [cite: 45]
-                <span class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Live Updates</span> [cite: 46]
-                </span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50/50">
-                        <tr class="text-[10px] uppercase font-black text-gray-400">
-                            <th class="p-6">Asset</th> [cite: 47]
-                            <th class="p-6">Buyer</th> [cite: 48]
-                            <th class="p-6">Total Paid</th> [cite: 48]
-                            <th class="p-6 text-right">Status</th> [cite: 48]
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        {% for order in orders %}
-                        <tr class="text-sm hover:bg-gray-50/50 transition">
-                            <td class="p-6 font-bold">{{ order.listing.title }}</td> [cite: 50]
-                            <td class="p-6">{{ order.buyer.name }}</td> [cite: 50]
-                            <td class="p-6 font-black">₦{{ "{:,.0f}".format(order.total_price) }}</td> [cite: 51]
-                            <td class="p-6 text-right">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase 
-                                    {% if order.delivery_status == 'Delivered' %}bg-green-100 text-green-700
-                                    {% elif order.delivery_status == 'Flagged' %}bg-red-100 text-red-700
-                                    {% else %}bg-orange-100 text-orange-700{% endif %}"> 
-                                    {{ order.delivery_status }} [cite: 53]
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="bg-gray-900 text-white rounded-[3rem] p-8 shadow-2xl">
-            <h3 class="font-bold text-xl mb-6">The Tribe</h3> [cite: 54]
-            <form action="{{ url_for('admin.dashboard') }}" method="GET" class="mb-8"> [cite: 54]
-                <div class="relative">
-                    <input type="text" name="user_q" placeholder="Search members..." 
-                           [cite_start]class="w-full bg-white/10 border-none rounded-2xl py-3 px-4 text-white outline-none"> [cite: 55]
+    <div id="broadcast-modal" class="hidden fixed inset-0 z-[200] bg-zinc-900/90 backdrop-blur-xl flex items-center justify-center px-6">
+        <div class="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl">
+            <h3 class="text-2xl font-black mb-4 tracking-tighter text-zinc-900">Global Signal</h3>
+            <form action="{{ url_for('main.global_broadcast') }}" method="POST">
+                <textarea name="message" rows="4" class="w-full bg-gray-50 border-none rounded-2xl p-6 text-sm mb-6 outline-none focus:ring-4 focus:ring-indigo-100 transition-all" placeholder="Enter system-wide alert message..."></textarea>
+                <div class="flex gap-4">
+                    <button type="button" onclick="toggleModal('broadcast-modal')" class="flex-1 py-4 text-zinc-400 font-black text-[10px] uppercase tracking-widest">Terminate</button>
+                    <button type="submit" class="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl">Transmit</button>
                 </div>
             </form>
-            <div class="space-y-6">
-                {% for user in users %}
-                <div class="flex items-center justify-between border-b border-white/10 pb-4 last:border-0">
-                    <div>
-                        <p class="font-bold text-sm">{{ user.name }}</p> [cite: 57]
-                        <p class="text-[9px] text-gray-500 uppercase tracking-widest">
-                            {% if user.is_admin %}Admin{% elif user.is_agent %}Agent{% elif user.is_driver %}Driver{% else %}Buyer{% endif %} [cite: 58]
-                        </p>
-                    </div>
-                    <p class="text-[10px] font-black text-green-400">₦{{ "{:,.0f}".format(user.wallet_balance) }}</p> [cite: 59]
-                </div>
-                {% endfor %}
-            </div>
         </div>
     </div>
 
-    <div class="mt-16">
-        <h3 class="text-2xl font-black text-gray-900 mb-8">Dispute Resolution</h3> [cite: 60]
-        <div class="grid gap-6">
-            {% for d in disputes %}
-            <div class="bg-white p-8 rounded-[3rem] border border-red-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-8">
-                <div class="max-w-xl">
-                    <span class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">{{ d.reason }}</span> [cite: 61]
-                    <h4 class="text-lg font-bold text-gray-900 mt-2">Order #{{ d.order_id }} • Ticket by {{ d.user.name }}</h4> [cite: 61]
-                    <p class="text-sm text-gray-400 mt-2 italic">"{{ d.details }}"</p> [cite: 61]
+    <div class="max-w-7xl mx-auto px-6 mt-12 grid lg:grid-cols-12 gap-12">
+        
+        <div class="lg:col-span-8 space-y-16">
+            
+            <section>
+                <h2 class="text-xs font-black text-rose-500 uppercase tracking-[0.4em] mb-8">SOS Lockdown Console</h2>
+                {% for dispute in disputes %}
+                <div class="bg-white border border-rose-100 rounded-[3rem] p-10 flex flex-col gap-8 shadow-sm hover:shadow-xl transition-all relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-2 h-full bg-rose-500"></div>
+                    <div>
+                        <div class="flex items-center gap-4 mb-4">
+                            <span class="text-[9px] font-black bg-rose-600 text-white px-4 py-1.5 rounded-lg uppercase tracking-widest">{{ dispute.order.handshake_id }}</span>
+                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Reported by {{ dispute.user.name }}</span>
+                        </div>
+                        <h3 class="text-2xl font-black mt-2 mb-2">{{ dispute.reason }}</h3>
+                        <p class="text-zinc-600 text-sm italic font-medium leading-relaxed">"{{ dispute.details }}"</p>
+                    </div>
+
+                    <div class="flex gap-3 pt-6 border-t border-gray-50">
+                        <form action="{{ url_for('admin.resolve_dispute', dispute_id=dispute.id, action='refund') }}" method="POST" class="flex-1">
+                            <button class="w-full px-8 py-5 bg-rose-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-black transition-all">Refund Buyer</button>
+                        </form>
+                        <form action="{{ url_for('admin.resolve_dispute', dispute_id=dispute.id, action='unlock') }}" method="POST" class="flex-1">
+                            <button class="w-full px-8 py-5 bg-zinc-900 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-emerald-600 transition-all">Unlock Funds</button>
+                        </form>
+                    </div>
                 </div>
-                <div class="flex gap-4">
-                    <form action="{{ url_for('admin.resolve', dispute_id=d.id) }}" method="POST"> [cite: 62]
-                        <button type="submit" class="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase hover:bg-black transition">
-                            Release Funds [cite: 63]
-                        </button>
+                {% else %}
+                <div class="py-20 text-center bg-gray-100/50 rounded-[3rem] border-2 border-dashed border-gray-200">
+                    <p class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Zero Crisis Signals Detected</p>
+                </div>
+                {% endfor %}
+            </section>
+
+            <section>
+                <h2 class="text-xs font-black text-indigo-500 uppercase tracking-[0.4em] mb-8">Fleet & Identity Verifier</h2>
+                <div class="space-y-6">
+                    {% for user in pending_kyc %}
+                    <div class="bg-white border border-gray-100 rounded-[3rem] p-10 flex flex-col gap-8 shadow-sm relative overflow-hidden">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div class="flex items-center gap-6">
+                                <div class="w-20 h-20 rounded-[2rem] overflow-hidden border-2 border-gray-50 shadow-lg">
+                                    <img src="{{ url_for('static', filename='uploads/' + user.image_file) }}" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <h4 class="text-xl font-black text-zinc-900">{{ user.name }}</h4>
+                                    <p class="text-[9px] font-black text-indigo-500 uppercase tracking-widest">Node ID: FT-{{ user.id }}</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <button onclick="openAuditModal('{{ user.id }}', '{{ user.name }}', '{{ user.kyc_selfie_file }}', '{{ user.kyc_id_file }}')" class="px-8 py-4 bg-zinc-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all">
+                                    Audit Documents
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="py-20 text-center bg-gray-100/50 rounded-[3rem] border-2 border-dashed border-gray-200">
+                        <p class="text-[10px] font-black text-gray-300 uppercase tracking-widest">No Identity Signals in Buffer</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+
+        <div class="lg:col-span-4">
+            <h3 class="text-xs font-black text-zinc-400 uppercase tracking-[0.4em] mb-8">Identity Registry</h3>
+            <div class="bg-white border border-gray-100 rounded-[3.5rem] shadow-sm overflow-hidden h-[900px] flex flex-col">
+                <div class="p-6 bg-gray-50/50 border-b border-gray-100">
+                    <form action="{{ url_for('admin.admin_panel') }}" method="GET">
+                        <input type="text" name="user_q" placeholder="Search Identity Signal..." class="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-black transition-all">
                     </form>
-                    <form action="{{ url_for('admin.refund', dispute_id=d.id) }}" method="POST"> [cite: 63]
-                        <button type="submit" class="bg-red-50 text-red-600 px-8 py-4 rounded-2xl font-black text-[10px] uppercase hover:bg-red-100 transition">
-                            Issue Refund [cite: 64]
-                        </button>
-                    </form>
+                </div>
+                <div class="overflow-y-auto custom-scrollbar flex-grow">
+                    {% for user in users %}
+                    <div class="p-6 border-b border-gray-50 flex justify-between items-center group hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center text-xs font-black border border-gray-200">
+                                <img src="{{ url_for('static', filename='uploads/' + user.image_file) }}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <p class="text-xs font-black text-zinc-900">{{ user.name }}</p>
+                                <p class="text-[8px] font-black text-zinc-400 uppercase">{{ user.role }} {% if user.is_verified %}<span class="text-emerald-500 ml-1">●</span>{% endif %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% else %}
-            <div class="py-20 text-center bg-gray-50 rounded-[4rem] border-2 border-dashed border-gray-100">
-                <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">No active disputes in the Tribe.</p> [cite: 65]
-            </div>
-            {% endfor %}
         </div>
     </div>
 </div>
+
+<div id="audit-modal" class="hidden fixed inset-0 z-[300] bg-zinc-900/95 backdrop-blur-xl flex items-center justify-center p-6">
+    <div class="bg-white rounded-[4rem] w-full max-w-5xl h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+        <div class="p-10 flex justify-between items-center border-b border-gray-100">
+            <div>
+                <h3 id="audit-user-name" class="text-3xl font-black tracking-tighter text-zinc-900">User Audit</h3>
+                <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-1">Sovereign Identity Verification Protocol</p>
+            </div>
+            <button onclick="toggleModal('audit-modal')" class="text-2xl text-zinc-300 hover:text-black transition-all"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="flex-grow overflow-y-auto p-10 grid md:grid-cols-2 gap-10">
+            <div class="space-y-4">
+                <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Selfie Signal</p>
+                <div class="rounded-3xl overflow-hidden border border-gray-100 shadow-sm aspect-video">
+                    <img id="audit-selfie" src="" class="w-full h-full object-cover">
+                </div>
+            </div>
+            <div class="space-y-4">
+                <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">ID Card Signal</p>
+                <div class="rounded-3xl overflow-hidden border border-gray-100 shadow-sm aspect-video">
+                    <img id="audit-id" src="" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+
+        <div class="p-10 bg-gray-50 border-t border-gray-100">
+            <div class="flex flex-col md:flex-row gap-6">
+                <form id="approve-form" action="" method="POST" class="flex-1">
+                    <button type="submit" class="w-full py-6 bg-emerald-500 text-white rounded-3xl font-black text-[11px] uppercase tracking-widest hover:bg-zinc-900 transition-all">Authorize Node</button>
+                </form>
+                
+                <div class="flex-[1.5] flex gap-4">
+                    <input type="text" id="reject-reason" placeholder="Enter rejection reason (e.g., ID Blurry)" class="flex-grow px-6 py-4 rounded-2xl bg-white border border-gray-200 text-xs font-bold outline-none focus:ring-4 focus:ring-rose-100 transition-all">
+                    <form id="reject-form" action="" method="POST">
+                        <input type="hidden" name="reason" id="hidden-reason">
+                        <button type="submit" onclick="submitRejection(event)" class="h-full px-8 bg-rose-50 text-rose-600 rounded-3xl font-black text-[11px] uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all">Reject</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleModal(id) {
+        document.getElementById(id).classList.toggle('hidden');
+    }
+
+    function openAuditModal(userId, name, selfie, idCard) {
+        document.getElementById('audit-user-name').innerText = name + ' Audit';
+        document.getElementById('audit-selfie').src = '/static/uploads/kyc/' + selfie;
+        document.getElementById('audit-id').src = '/static/uploads/kyc/' + idCard;
+        
+        // Update form actions
+        document.getElementById('approve-form').action = '/admin/verify-user/' + userId + '/approve';
+        document.getElementById('reject-form').action = '/admin/verify-user/' + userId + '/reject';
+        
+        toggleModal('audit-modal');
+    }
+
+    function submitRejection(e) {
+        const reason = document.getElementById('reject-reason').value;
+        if (!reason) {
+            alert('Signal Error: Rejection requires a valid reason.');
+            e.preventDefault();
+            return;
+        }
+        document.getElementById('hidden-reason').value = reason;
+    }
+</script>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+</style>
 {% endblock %}
