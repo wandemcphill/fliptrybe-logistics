@@ -50,25 +50,18 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        # Safety check for empty or null hashes
         if not self.password_hash:
             return False
         return check_password_hash(self.password_hash, password)
-
-    @property
-    def kyc_status(self):
-        if self.is_verified: return 'Verified'
-        if self.kyc_id_card_file: return 'Pending'
-        return 'Unverified'
 
 class Listing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     price = db.Column(db.Float, nullable=False)
-    image_filename = db.Column(db.String(120), default='default_item.jpg') # 🛡️ Safe Default
+    image_filename = db.Column(db.String(120), default='default_item.jpg') 
     category = db.Column(db.String(50)) 
-    section = db.Column(db.String(20), default='declutter') # 🛠️ Fixed missing column
+    section = db.Column(db.String(20), default='declutter') 
     condition = db.Column(db.String(20))
     brand = db.Column(db.String(50))
     specifications = db.Column(db.String(100))
@@ -100,9 +93,17 @@ class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
-    type = db.Column(db.String(20), nullable=False) # 'Credit', 'Debit'
+    type = db.Column(db.String(20), nullable=False) 
     status = db.Column(db.String(20), default='Success')
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Dispute(db.Model): # 🛡️ RESTORED MODEL
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+    reason = db.Column(db.String(100))
+    description = db.Column(db.Text)
+    status = db.Column(db.String(20), default='Open')
+    order = db.relationship('Order', backref='order_disputes')
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
