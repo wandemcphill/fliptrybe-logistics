@@ -5,9 +5,38 @@ from werkzeug.utils import secure_filename
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, bcrypt
 from app.models import User
-from app.forms import RegistrationForm, LoginForm
+# ✅ FIXED: Added KYCVerificationForm to imports
+from app.forms import RegistrationForm, LoginForm, KYCVerificationForm
 
 auth = Blueprint('auth', __name__)
+
+# ==========================================
+# 🛠️ HELPER: SECURE FILE SAVER
+# ==========================================
+def save_file(file_obj, folder_name):
+    """Saves a file to a specific folder in static/uploads and returns the filename."""
+    if not file_obj:
+        return None
+    
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(file_obj.filename)
+    filename = random_hex + f_ext
+    
+    # Build path
+    folder_path = os.path.join(current_app.root_path, 'static/uploads', folder_name)
+    
+    # Create folder if it doesn't exist (Safety Check)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        
+    file_path = os.path.join(folder_path, filename)
+    file_obj.save(file_path)
+    
+    return filename
+
+# ==========================================
+# 🔐 AUTHENTICATION NODES
+# ==========================================
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -17,18 +46,13 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.lower()).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            # 🛡️ Establish secure session
+        # ✅ FIXED: Changed 'user.password' to 'user.password_hash' to match your Model
+        if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
+            flash(f"Transmission Established. Welcome, {user.username}.", "success")
             
-            flash(f"Transmission Established. Welcome, {user.name}.", "success")
-            
-            # 🛰️ Dynamic Routing Logic
             next_page = request.args.get('next')
-            if next_page: return redirect(next_page)
-            if user.is_admin: return redirect(url_for('admin.admin_panel'))
-            if user.is_driver: return redirect(url_for('main.pilot_console'))
-            return redirect(url_for('main.dashboard'))
+            return redirect(next_page) if next_page else redirect(url_for('main.dashboard'))
         else:
             flash('Login Failed. Identity mismatch or invalid key.', 'error')
             
@@ -42,53 +66,14 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         
-        # 🛠️ Helper function to save files safely
-        def save_kyc_file(file_obj, prefix):
-            if file_obj and file_obj.filename:
-                random_hex = secrets.token_hex(4)
-                fname = secure_filename(f"{prefix}_{random_hex}_{file_obj.filename}")
-                # Ensure the folder exists on the server
-                path = os.path.join(current_app.root_path, 'static', 'uploads', 'kyc')
-                os.makedirs(path, exist_ok=True)
-                file_obj.save(os.path.join(path, fname))
-                return fname
-            return None
-
-        # 📸 Capture Files from Request
-        # Note: Your HTML form must have enctype="multipart/form-data"
-        kyc_selfie = save_kyc_file(request.files.get('kyc_selfie'), "SELFIE")
-        kyc_id = save_kyc_file(request.files.get('kyc_id_card'), "ID")
-        kyc_video = save_kyc_file(request.files.get('kyc_video'), "VIDEO")
-        kyc_plate = save_kyc_file(request.files.get('kyc_plate'), "PLATE")
-
-        # 🔐 Signal Sanitization
-        phone_raw = request.form.get('phone', '')
-        sanitized_phone = ''.join(filter(str.isdigit, phone_raw))
-
-        hashed_pw = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-
-        # ✅ FIXED: Exact column match with models.py
+        # Create User Instance
         new_user = User(
             username=form.username.data.lower(),
             email=form.email.data.lower(),
-            name=request.form.get('name'), # Ensure your HTML input has name="name"
-            password=hashed_pw,
-            phone=sanitized_phone,
-            address=request.form.get('address'),
-            state=request.form.get('state'),
-            city=request.form.get('city'),
             role=form.role.data,
-            is_driver=(form.role.data == 'driver'),
-            
-            # 👇 Mapped correctly to User class
-            kyc_selfie_file=kyc_selfie,
-            kyc_id_file=kyc_id,
-            kyc_video_file=kyc_video,
-            kyc_plate=kyc_plate, # This one has no _file suffix in model
-            
-            # Set profile picture
-            image_file=kyc_selfie if kyc_selfie else 'default.jpg'
+            is_driver=(form.role.data == 'driver')
         )
+        new_user.set_password(form.password.data) # Uses the method from your Model
 
         db.session.add(new_user)
         db.session.commit()
@@ -97,6 +82,38 @@ def register():
         return redirect(url_for('auth.login'))
 
     return render_template('signup.html', title='Register', form=form)
+
+# ==========================================
+# 🛡️ IDENTITY VERIFICATION NODE (NEW!)
+# ==========================================
+@auth.route('/verify', methods=['GET', 'POST'])
+@login_required
+def verify_identity():
+    # 1. Block if already verified
+    if current_user.is_verified:
+        flash("Identity already confirmed. You are a trusted node.", "info")
+        return redirect(url_for('main.dashboard'))
+
+    form = KYCVerificationForm()
+    
+    if form.validate_on_submit():
+        # 2. Save the Evidence Files
+        id_filename = save_file(form.id_image.data, 'kyc_docs')
+        selfie_filename = save_file(form.selfie_image.data, 'kyc_selfies')
+        
+        # 3. Update User Record
+        current_user.kyc_id_card_file = id_filename
+        current_user.kyc_selfie_file = selfie_filename
+        
+        # Note: We do NOT set is_verified=True here. 
+        # The Admin must approve it manually in the Admin Panel.
+        
+        db.session.commit()
+        
+        flash('Verification Data Transmitted. Pending Admin Approval.', 'success')
+        return redirect(url_for('main.dashboard'))
+        
+    return render_template('verify.html', title='Verify Identity', form=form)
 
 @auth.route('/logout')
 def logout():

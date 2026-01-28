@@ -15,9 +15,14 @@ class SignalSizeLimit(object):
 
     def __call__(self, form, field):
         if field.data:
-            if len(field.data.read()) > self.max_size:
-                raise ValidationError(f"Signal too heavy. Maximum allowed size is {self.max_size / (1024*1024)}MB.")
-            field.data.seek(0) # Reset pointer after reading
+            # Check if it's a file object and not just a string/filename
+            if hasattr(field.data, 'read'): 
+                field.data.seek(0, 2) # Seek to end
+                size = field.data.tell() # Get size
+                field.data.seek(0) # Reset pointer
+                
+                if size > self.max_size:
+                    raise ValidationError(f"Signal too heavy. Maximum allowed size is {self.max_size / (1024*1024)}MB.")
 
 # ==========================================
 # 👤 IDENTITY REGISTRATION
@@ -66,13 +71,33 @@ class UpdateAccountForm(FlaskForm):
     vehicle_year = StringField('Vehicle Year')
     license_plate = StringField('License Plate')
     
-    # KYC Signal Node
-    id_card = FileField('Verification ID (NIN/License)', validators=[
+    submit = SubmitField('Synchronize Data')
+
+# ==========================================
+# 🛡️ KYC VERIFICATION NODE (NEW!)
+# ==========================================
+class KYCVerificationForm(FlaskForm):
+    full_name = StringField('Legal Full Name (Matches ID)', validators=[DataRequired()])
+    id_type = SelectField('Document Type', choices=[
+        ('nin', 'National ID (NIN)'),
+        ('passport', 'International Passport'),
+        ('license', 'Drivers License'),
+        ('voters', 'Voters Card')
+    ], validators=[DataRequired()])
+    
+    id_image = FileField('Upload ID Document', validators=[
+        FileRequired(),
         FileAllowed(['jpg', 'png', 'jpeg', 'pdf']),
-        SignalSizeLimit(max_size_mb=5) # 5MB limit for IDs
+        SignalSizeLimit(max_size_mb=5)
     ])
     
-    submit = SubmitField('Synchronize Data')
+    selfie_image = FileField('Live Selfie (For Face Match)', validators=[
+        FileRequired(),
+        FileAllowed(['jpg', 'png', 'jpeg']),
+        SignalSizeLimit(max_size_mb=5)
+    ])
+    
+    submit = SubmitField('Submit for Verification')
 
 # ==========================================
 # 📦 ASSET DEPLOYMENT (Marketplace)

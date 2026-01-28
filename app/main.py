@@ -84,10 +84,19 @@ def market():
 def product_detail(listing_id):
     # ✅ FIXED: Changed variable name to 'item' to match the template
     item = Listing.query.get_or_404(listing_id)
-    return render_template('product_detail.html', item=item, title=item.title)
+    
+    # 🧠 UPGRADE: Smart Recommendations (Related Items)
+    # Fetches 3 other items in the same category, excluding the current one
+    related_items = Listing.query.filter(
+        Listing.category == item.category,
+        Listing.id != item.id,
+        Listing.status == 'Available'
+    ).order_by(Listing.created_at.desc()).limit(3).all()
+
+    return render_template('product_detail.html', item=item, title=item.title, related_items=related_items)
 
 # ==========================================
-# 🤝 TRADE INITIALIZATION (This was missing!)
+# 🤝 TRADE INITIALIZATION
 # ==========================================
 @main.route("/trade/initiate/<int:listing_id>", methods=['POST'])
 @login_required

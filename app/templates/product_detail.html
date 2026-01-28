@@ -11,26 +11,33 @@
     <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-16">
         
         <div class="lg:col-span-7">
-            <div class="bg-white rounded-[4rem] overflow-hidden shadow-2xl border border-gray-100 aspect-square group">
-                <img src="{{ url_for('static', filename='uploads/' + product.image_filename) }}" 
+            <div class="bg-white rounded-[4rem] overflow-hidden shadow-2xl border border-gray-100 aspect-square group relative">
+                <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" 
+                     onerror="this.src='https://ui-avatars.com/api/?name={{ item.title }}&background=000&color=fff&size=512&font-size=0.3'"
                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s]">
+                
+                <div class="absolute top-8 left-8">
+                     <span class="bg-white/90 backdrop-blur-md text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl">
+                        {{ item.condition }}
+                    </span>
+                </div>
             </div>
             
             <div class="mt-16 space-y-8">
                 <div>
-                    <h1 class="text-5xl font-black text-gray-900 tracking-tighter mb-4">{{ product.title }}</h1>
+                    <h1 class="text-5xl font-black text-gray-900 tracking-tighter mb-4">{{ item.title }}</h1>
                     <div class="flex items-center gap-4">
                         <span class="bg-indigo-600 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">
-                            {{ product.condition }} Signal
+                            {{ item.category }} Signal
                         </span>
                         <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest border border-gray-200 px-6 py-2 rounded-xl">
-                            Node: {{ product.state }}
+                            Node: {{ item.state }}
                         </span>
                     </div>
                 </div>
                 
                 <p class="text-gray-500 font-medium leading-loose text-lg border-l-4 border-indigo-100 pl-8">
-                    {{ product.description }}
+                    {{ item.description }}
                 </p>
             </div>
         </div>
@@ -40,12 +47,28 @@
             <div class="bg-zinc-900 text-white p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
                 <div class="relative z-10">
                     <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-4">Required Liquidity</p>
-                    <h2 class="text-6xl font-black tracking-tighter mb-8">₦{{ "{:,.0f}".format(product.price) }}</h2>
+                    <h2 class="text-6xl font-black tracking-tighter mb-8">₦{{ "{:,.0f}".format(item.price) }}</h2>
                     
                     <div class="flex flex-col gap-4">
-                        <a href="#" class="w-full py-6 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] text-center hover:bg-emerald-500 hover:text-white transition-all duration-500 shadow-xl shadow-white/5">
-                            Initialize Handshake
-                        </a>
+                        {% if current_user.is_authenticated %}
+                            {% if current_user.id != item.user_id %}
+                                <form action="{{ url_for('main.initiate_trade', listing_id=item.id) }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="w-full py-6 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] text-center hover:bg-emerald-500 hover:text-white transition-all duration-500 shadow-xl shadow-white/5">
+                                        Initialize Handshake
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button disabled class="w-full py-6 bg-gray-800 text-gray-500 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] cursor-not-allowed">
+                                    Asset Owned
+                                </button>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="w-full py-6 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] text-center hover:bg-indigo-700 transition-all">
+                                Login to Trade
+                            </a>
+                        {% endif %}
+
                         <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest text-center mt-2 flex items-center justify-center gap-2">
                             <i class="fas fa-shield-halved text-emerald-500"></i> Protected by FlipTrybe Escrow
                         </p>
@@ -56,28 +79,32 @@
 
             <div class="bg-white border border-gray-100 rounded-[3rem] p-8 shadow-sm hover:shadow-xl transition-all duration-700">
                 <div class="flex items-center gap-6 mb-8">
-                    <div class="w-20 h-20 rounded-[2rem] overflow-hidden border-4 border-gray-50 shadow-lg">
-                        <img src="{{ url_for('static', filename='uploads/' + product.seller.image_file) }}" class="w-full h-full object-cover">
+                    <div class="w-20 h-20 rounded-[2rem] overflow-hidden border-4 border-gray-50 shadow-lg bg-gray-100">
+                         <img src="{{ url_for('static', filename='uploads/' + (item.seller.image_file or 'default.jpg')) }}" 
+                             onerror="this.src='https://ui-avatars.com/api/?name={{ item.seller.username }}&background=random'"
+                             class="w-full h-full object-cover">
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h4 class="text-xl font-black text-gray-900">{{ product.seller.name }}</h4>
-                            {% if product.seller.is_verified %}
+                            <h4 class="text-xl font-black text-gray-900">{{ item.seller.username }}</h4>
+                            {% if item.seller.is_verified %}
                             <i class="fas fa-check-circle text-indigo-500 text-sm" title="Verified Node"></i>
                             {% endif %}
                         </div>
-                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Node Status: Active Since {{ member_since }}</p>
+                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">
+                            Node Status: Active
+                        </p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100/50">
                         <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-2">Handshake Success</p>
-                        <h5 class="text-2xl font-black text-indigo-600">{{ success_rate }}%</h5>
+                        <h5 class="text-2xl font-black text-indigo-600">{{ success_rate|default('100') }}%</h5>
                         
                         <div id="trust-meter" 
                              class="w-full h-1 bg-gray-200 rounded-full mt-3 overflow-hidden"
-                             data-percent="{{ success_rate | default(0) }}">
+                             data-percent="{{ success_rate | default(100) }}">
                             <div id="trust-bar" class="bg-indigo-500 h-full transition-all duration-1000" style="width: 0%"></div>
                         </div>
                     </div>
@@ -85,14 +112,14 @@
                     <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100/50">
                         <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-2">Tribe Rating</p>
                         <div class="flex items-center gap-2">
-                            <h5 class="text-2xl font-black text-gray-900">{{ "{:.1f}".format(avg_rating) }}</h5>
+                            <h5 class="text-2xl font-black text-gray-900">{{ "{:.1f}".format(avg_rating|default(5.0)) }}</h5>
                             <i class="fas fa-star text-amber-400 text-xs"></i>
                         </div>
-                        <p class="text-[8px] font-bold text-gray-300 uppercase mt-2">{{ review_count }} Verified signals</p>
+                        <p class="text-[8px] font-bold text-gray-300 uppercase mt-2">{{ review_count|default(0) }} Verified signals</p>
                     </div>
                 </div>
 
-                <a href="{{ url_for('main.user_profile', username=product.seller.username) }}" class="block w-full text-center mt-6 py-4 bg-zinc-900 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all duration-500 shadow-xl shadow-zinc-100">
+                <a href="#" class="block w-full text-center mt-6 py-4 bg-zinc-900 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 transition-all duration-500 shadow-xl shadow-zinc-100">
                     Inspect Node History
                 </a>
             </div>
@@ -102,11 +129,11 @@
                 <div class="space-y-4">
                     <div class="flex justify-between border-b border-gray-200/50 pb-4">
                         <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Category</span>
-                        <span class="text-xs font-black text-gray-900">{{ product.category }}</span>
+                        <span class="text-xs font-black text-gray-900">{{ item.category }}</span>
                     </div>
                     <div class="flex justify-between border-b border-gray-200/50 pb-4">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Brand</span>
-                        <span class="text-xs font-black text-gray-900">{{ product.brand or 'Generic' }}</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Condition</span>
+                        <span class="text-xs font-black text-gray-900">{{ item.condition }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Hub Status</span>
@@ -121,12 +148,14 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Apply the velocity width dynamically to clear CSS diagnostic errors
         const meter = document.getElementById('trust-meter');
         const bar = document.getElementById('trust-bar');
         if (meter && bar) {
-            const percent = meter.getAttribute('data-percent');
-            bar.style.width = percent + '%';
+            // Wait a moment for layout to settle before animating
+            setTimeout(() => {
+                const percent = meter.getAttribute('data-percent');
+                bar.style.width = percent + '%';
+            }, 500);
         }
     });
 </script>
