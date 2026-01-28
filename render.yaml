@@ -6,11 +6,10 @@ services:
     startCommand: gunicorn run:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.5
+        value: 3.11  # Simplified for maximum compatibility
       - key: FLASK_DEBUG
         value: "False"
       - key: DATABASE_URL
-        # Ensure your disk is mounted to /instance so SQLite persists!
         value: sqlite:////opt/render/project/src/instance/fliptrybe_v2026.db
     disk:
       name: tribe-vault
