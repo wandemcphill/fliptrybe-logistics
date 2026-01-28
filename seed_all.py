@@ -4,127 +4,43 @@ import os
 
 app = create_app()
 
-with app.app_context():
-    print("\n🧹 TERMINATING EXISTING SIGNALS (Dropping Tables)...")
-    db.drop_all()
-    
-    print("🏗️  RECONSTRUCTING TRIBE ARCHITECTURE (Creating Tables)...")
-    db.create_all()
-    
-    print("🚀 INITIALIZING GENESIS USERS...")
+def run_genesis():
+    with app.app_context():
+        print("🧹 CLEARING GRID...")
+        db.drop_all()
+        db.create_all()
 
-    # 1. 👑 THE OVERSEER (Admin)
-    admin_pw = bcrypt.generate_password_hash("admin123").decode('utf-8')
-    admin = User(
-        name="Opeyemi Admin",
-        username="admin_op",
-        email="admin@fliptrybe.com", 
-        password=admin_pw, 
-        role="admin",
-        is_admin=True,
-        image_file="default.jpg"
-    )
-    db.session.add(admin)
+        print("🚀 INITIALIZING GENESIS NODES...")
+        
+        # Master Admin
+        pw = bcrypt.generate_password_hash("admin123").decode('utf-8')
+        admin = User(name="Overseer", username="admin_hq", email="admin@fliptrybe.com", 
+                     password_hash=pw, role="admin", is_admin=True, is_verified=True)
+        db.session.add(admin)
 
-    # 2. 🏠 THE PROPERTY MOGUL (Agent)
-    agent_pw = bcrypt.generate_password_hash("agent123").decode('utf-8')
-    agent = User(
-        name="Agent Chidi",
-        username="chidi_realty",
-        email="agent@fliptrybe.com", 
-        password=agent_pw, 
-        phone="+2348011223344", 
-        role="agent", 
-        is_agent=True, 
-        state="Lagos",
-        city="Lekki",
-        wallet_balance=5000.0,
-        image_file="default.jpg"
-    )
-    db.session.add(agent)
+        # Pilot Alpha
+        p_pw = bcrypt.generate_password_hash("driver123").decode('utf-8')
+        pilot = User(name="Musa Driver", username="pilot_alpha", email="driver@fliptrybe.com", 
+                     password_hash=p_pw, role="driver", is_driver=True, is_verified=True,
+                     state="Lagos", vehicle_type="Toyota Hiace", license_plate="LAG-504-FT")
+        db.session.add(pilot)
 
-    # 3. 🚐 THE LOGISTICS PILOT (Driver)
-    driver_pw = bcrypt.generate_password_hash("driver123").decode('utf-8')
-    driver = User(
-        name="Musa Driver",
-        username="musa_wheels",
-        email="driver@fliptrybe.com",
-        password=driver_pw,
-        phone="+2349055667788",
-        role="driver",
-        is_driver=True,
-        state="Lagos",
-        city="Ikeja",
-        # Logistics Specs
-        vehicle_type="Toyota Hiace",
-        vehicle_year="2018",
-        vehicle_color="Silver",
-        license_plate="LAG-504-KD",
-        rating=4.9,
-        image_file="default.jpg"
-    )
-    db.session.add(driver)
+        # Merchant
+        m_pw = bcrypt.generate_password_hash("buyer123").decode('utf-8')
+        buyer = User(name="Lekan Merchant", username="lekan_m", email="buyer@fliptrybe.com", 
+                     password_hash=m_pw, role="user", wallet_balance=2500000.0)
+        db.session.add(buyer)
 
-    # 4. 🛒 THE ALPHA BUYER
-    buyer_pw = bcrypt.generate_password_hash("buyer123").decode('utf-8')
-    buyer = User(
-        name="Lekan Buyer", 
-        username="lekan_b",
-        email="buyer@fliptrybe.com", 
-        password=buyer_pw, 
-        phone="+2347011122233", 
-        role="user",
-        state="Lagos",
-        city="Victoria Island",
-        wallet_balance=2500000.0, # ₦2.5M for the MacBook!
-        image_file="default.jpg"
-    )
-    db.session.add(buyer)
+        db.session.commit()
 
-    db.session.commit()
-    print("✅ IDENTITY NODES SYNCED.")
+        # Asset Deployment
+        item = Listing(title="MacBook Pro M3 Max", description="Silicon Valley Level Hardware.", 
+                       price=1850000.0, section="declutter", category="Electronics", 
+                       state="Lagos", city="Ikeja", user_id=buyer.id)
+        db.session.add(item)
+        
+        db.session.commit()
+        print("✅ GENESIS COMPLETE.")
 
-    # 5. 🛰️ DEPLOYING INITIAL ASSETS
-    print("📡 DEPLOYING MARKET SIGNALS...")
-    
-    # Asset 1: Premium Real Estate
-    shortlet = Listing(
-        title="Luxury Lekki Ocean-View Shortlet", 
-        description="High-fidelity 2-bedroom apartment. Includes 24/7 Power, Starlink Internet, and Private Security. Perfect for digital nomads.", 
-        price=85000.0, 
-        section="shortlet",
-        category="Real Estate", 
-        specifications="2-Bedroom / Ocean View",
-        condition="New",
-        state="Lagos", 
-        city="Lekki Phase 1", 
-        seller_id=agent.id,
-        status="Available"
-    )
-    db.session.add(shortlet)
-
-    # Asset 2: High-Value Declutter
-    laptop = Listing(
-        title="MacBook Pro M3 Max (2024)", 
-        description="Unopened box. 32GB RAM, 1TB SSD. Liquid Retina XDR display. Selling due to corporate upgrade.", 
-        price=1850000.0, 
-        section="declutter",
-        category="Electronics", 
-        brand="Apple",
-        specifications="14-inch / M3 Max",
-        condition="New",
-        state="Lagos", 
-        city="Ikeja", 
-        seller_id=buyer.id, # The buyer is acting as a seller here
-        status="Available"
-    )
-    db.session.add(laptop)
-
-    db.session.commit()
-    print("✅ ASSETS DEPLOYED TO GRID.")
-
-    print("\n🔥 GENESIS COMPLETE.")
-    print("👉 Terminal Access: admin@fliptrybe.com / admin123")
-    print("👉 Driver Unit: driver@fliptrybe.com / driver123")
-    print("👉 Market Entry: buyer@fliptrybe.com / buyer123")
-    print("\nRun 'python run.py' to initialize the terminal.")
+if __name__ == '__main__':
+    run_genesis()

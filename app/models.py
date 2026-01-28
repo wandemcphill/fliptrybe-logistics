@@ -1,4 +1,6 @@
+import os
 from datetime import datetime
+from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
@@ -10,83 +12,116 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256))
     name = db.Column(db.String(64))
     phone = db.Column(db.String(20))
-    role = db.Column(db.String(20), default='user')
+    role = db.Column(db.String(20), default='user') # user, driver, agent, admin
     image_file = db.Column(db.String(120), nullable=False, default='default.jpg')
     wallet_balance = db.Column(db.Float, default=0.0)
+    address = db.Column(db.String(200))
+    city = db.Column(db.String(64))
+    state = db.Column(db.String(64))
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # 🛡️ Permission Nodes
     is_admin = db.Column(db.Boolean, default=False)
     is_driver = db.Column(db.Boolean, default=False)
+    is_agent = db.Column(db.Boolean, default=False) 
     is_verified = db.Column(db.Boolean, default=False)
-    
-    # Pilot specifics
-    vehicle_type = db.Column(db.String(50))
-    vehicle_year = db.Column(db.String(10)) 
-    license_plate = db.Column(db.String(20))
-    
-    # KYC Signals
-    kyc_selfie_file = db.Column(db.String(120))
+
+    # 📡 Identity Signals (KYC)
     kyc_id_card_file = db.Column(db.String(120))
+    kyc_selfie_file = db.Column(db.String(120))
     kyc_video_file = db.Column(db.String(120))
+    kyc_plate_file = db.Column(db.String(120))
+    
+    # 🚚 Pilot Telemetry & Stats
+    vehicle_type = db.Column(db.String(50))
+    vehicle_year = db.Column(db.String(20))
+    license_plate = db.Column(db.String(20))
+    current_lat = db.Column(db.Float, default=6.5244) 
+    current_lng = db.Column(db.Float, default=3.3792)
+    signal_strength = db.Column(db.Integer, default=100)
 
-    # Relationships
+    # 🖇️ Relationships
     listings = db.relationship('Listing', backref='seller', lazy='dynamic')
-    orders_as_buyer = db.relationship('Order', backref='buyer', lazy='dynamic', foreign_keys='Order.user_id')
-    deliveries = db.relationship('Order', backref='pilot', lazy='dynamic', foreign_keys='Order.driver_id')
-    notifications = db.relationship('Notification', backref='recipient', lazy='dynamic')
-    withdrawals = db.relationship('Withdrawal', backref='user', lazy='dynamic')
+    orders_bought = db.relationship('Order', foreign_keys='Order.buyer_id', backref='buyer', lazy='dynamic')
+    orders_handled = db.relationship('Order', foreign_keys='Order.driver_id', backref='driver', lazy='dynamic')
+    notifications = db.relationship('Notification', backref='user', lazy='dynamic')
+    transactions = db.relationship('Transaction', backref='owner', lazy='dynamic')
 
-    def set_password(self, password): self.password_hash = generate_password_hash(password)
-    def check_password(self, password): return check_password_hash(self.password_hash, password)
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    @property
+    def kyc_status(self):
+        if self.is_verified: return 'Verified'
+        if self.kyc_id_card_file: return 'Pending'
+        return 'Unverified'
 
 class Listing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    title = db.Column(db.String(140))
-    description = db.Column(db.Text)
-    price = db.Column(db.Float)
-    category = db.Column(db.String(50))
-    state = db.Column(db.String(50))
-    city = db.Column(db.String(50))
-    condition = db.Column(db.String(50)) 
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Float, nullable=False)
     image_filename = db.Column(db.String(120))
+    category = db.Column(db.String(50)) 
+    section = db.Column(db.String(20), default='declutter') 
+    condition = db.Column(db.String(20))
+    brand = db.Column(db.String(50))
+    specifications = db.Column(db.String(100))
+    city = db.Column(db.String(64))
+    state = db.Column(db.String(64))
     status = db.Column(db.String(20), default='Available')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id')) 
+    escrow_reference = db.Column(db.String(20), unique=True)
+    verification_pin = db.Column(db.String(4))
+    total_price = db.Column(db.Float, nullable=False)
+    delivery_status = db.Column(db.String(20), default='Processing')
+    status = db.Column(db.String(20), default='Pending') # Pending, Released, Disputed
+    order_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    buyer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    driver_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     listing_id = db.Column(db.Integer, db.ForeignKey('listing.id'))
-    driver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) 
-    status = db.Column(db.String(20), default='Pending') 
-    delivery_status = db.Column(db.String(20), default='Unassigned')
-    total_price = db.Column(db.Float)
-    escrow_reference = db.Column(db.String(64))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    listing = db.relationship('Listing', backref='order_record')
+    listing = db.relationship('Listing', backref='orders_list')
 
-class Withdrawal(db.Model):
+    @property
+    def handshake_id(self):
+        return f"HSK-{self.escrow_reference or self.id + 10000}"
+
+    @property
+    def subtotal(self):
+        return self.total_price / 1.075
+
+    @property
+    def tax_amount(self):
+        return self.total_price - self.subtotal
+
+class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    amount = db.Column(db.Float)
-    bank_name = db.Column(db.String(100))
-    account_number = db.Column(db.String(10))
-    status = db.Column(db.String(20), default='Pending') 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    type = db.Column(db.String(20), nullable=False) # 'Credit', 'Debit', 'Withdrawal'
+    status = db.Column(db.String(20), default='Success')
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Dispute(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    reason = db.Column(db.String(255))
+    reason = db.Column(db.String(100))
     description = db.Column(db.Text)
     status = db.Column(db.String(20), default='Open')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    order = db.relationship('Order', backref='dispute_record', uselist=False)
+    order = db.relationship('Order', backref='order_disputes')
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    title = db.Column(db.String(64))
-    message = db.Column(db.String(256))
+    title = db.Column(db.String(100))
+    message = db.Column(db.Text)
     read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
