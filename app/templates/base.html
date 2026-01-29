@@ -3,13 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlipTrybe // The Grid</title>
+    <title>FlipTrybe // Marketplace & Logistics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        /* Neural Marquee Animation */
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    
+    <style type="text/tailwindcss">
+        @layer base {
+            body { font-family: 'Inter', sans-serif; }
+        }
+
+        @layer components {
+            /* 🔘 BOLD, FLAT BUTTONS */
+            .btn-primary {
+                @apply bg-black text-white px-6 py-3 text-[11px] font-black uppercase tracking-widest transition-all border-2 border-black hover:bg-white hover:text-black rounded-none;
+            }
+            
+            .btn-secondary {
+                @apply bg-white text-black border-2 border-black px-6 py-3 text-[11px] font-black uppercase tracking-widest transition-all hover:bg-black hover:text-white rounded-none;
+            }
+        }
+
+        /* 📟 SYSTEM MARQUEE */
         @keyframes scroll {
             0% { transform: translateX(100%); }
             100% { transform: translateX(-100%); }
@@ -23,93 +38,66 @@
 </head>
 <body class="bg-white text-gray-900 flex flex-col min-h-screen">
 
-    <div class="bg-black text-white text-[9px] font-bold uppercase tracking-[0.2em] py-2 overflow-hidden relative">
+    <div class="bg-black text-white text-[9px] font-black uppercase tracking-[0.2em] py-2 overflow-hidden border-b border-black">
         <div class="animate-marquee">
             {% if activity_signals %}
                 {% for signal in activity_signals %}
-                <span class="mx-8">
-                    <i class="fas fa-circle text-[6px] text-emerald-500 mr-2 animate-pulse"></i>
-                    {{ signal.msg }}
+                <span class="mx-12">
+                    <span class="text-blue-500 mr-2">●</span> {{ signal.msg }}
                 </span>
                 {% endfor %}
             {% else %}
-                <span class="mx-8">System Online... Grid Stable... Waiting for signals...</span>
+                <span class="mx-12">Welcome to FlipTrybe // Real-time marketplace updates...</span>
             {% endif %}
         </div>
     </div>
 
-    <nav class="border-b border-gray-100 py-6 px-6">
+    <nav class="border-b-2 border-black py-5 px-6 sticky top-0 bg-white z-50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             
-            <a href="{{ url_for('main.index') }}" class="text-xl font-black uppercase italic tracking-tighter">
-                Flip<span class="text-gray-400">Trybe</span>
+            <a href="{{ url_for('main.index') }}" class="text-2xl font-black uppercase tracking-tighter">
+                Flip<span class="text-blue-600">Trybe</span>
             </a>
 
-            <div class="hidden md:flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest">
+            <div class="hidden md:flex items-center gap-8 text-[11px] font-black uppercase tracking-widest">
                 
-                <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full border border-gray-100 mr-4">
-                    <div class="relative flex h-2 w-2">
-                        {% if grid_status == 'Optimal' %}
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        {% else %}
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                        {% endif %}
-                    </div>
-                    <span class="text-[8px] font-black uppercase tracking-[0.1em] text-gray-400">
-                        Grid: <span class="{{ 'text-emerald-600' if grid_status == 'Optimal' else 'text-red-600' }}">
-                            {{ grid_status }}
-                        </span>
-                    </span>
+                <div class="flex items-center gap-2 border-r border-gray-200 pr-6">
+                    <div class="h-2 w-2 rounded-full {{ 'bg-emerald-500' if grid_status == 'Optimal' else 'bg-red-500' }}"></div>
+                    <span class="text-gray-400 text-[9px]">System {{ grid_status }}</span>
                 </div>
 
-                <a href="{{ url_for('main.index') }}" class="hover:text-emerald-600 transition-colors">Market Grid</a>
+                <a href="{{ url_for('main.index') }}" class="hover:text-blue-600 transition-colors">Marketplace</a>
                 
                 {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('main.dashboard') }}" class="hover:text-emerald-600 transition-colors">Command</a>
-                    <a href="{{ url_for('main.merchant_hub') }}" class="hover:text-purple-600 transition-colors">Merchant Hub</a>
+                    <a href="{{ url_for('main.dashboard') }}" class="hover:text-blue-600 transition-colors">My Dashboard</a>
+                    <a href="{{ url_for('main.merchant_hub') }}" class="hover:text-blue-600 transition-colors">Sell an Item</a>
                     
                     {% if current_user.is_driver %}
-                    <a href="{{ url_for('main.pilot_console') }}" class="text-blue-600 hover:text-blue-800 transition-colors">
-                        <i class="fas fa-helicopter mr-1"></i> Pilot Console
+                    <a href="{{ url_for('main.pilot_console') }}" class="text-blue-600">
+                        <i class="fas fa-truck mr-1"></i> Deliveries
                     </a>
                     {% endif %}
 
-                    <a href="{{ url_for('auth.logout') }}" class="text-gray-400 hover:text-red-500 transition-colors">Disconnect</a>
+                    <a href="{{ url_for('auth.logout') }}" class="text-gray-400 hover:text-red-600 transition-colors">Log Out</a>
                     
-                    <div class="w-8 h-8 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                    <div class="w-8 h-8 bg-gray-100 border border-black overflow-hidden">
                         <img src="https://ui-avatars.com/api/?name={{ current_user.name }}&background=000&color=fff" class="w-full h-full object-cover">
                     </div>
                 {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="hover:text-black transition-colors">Login</a>
-                    <a href="{{ url_for('auth.register') }}" class="bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors">Initialize</a>
+                    <a href="{{ url_for('auth.login') }}" class="hover:text-blue-600 transition-colors">Sign In</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn-primary">Join Now</a>
                 {% endif %}
             </div>
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-6 mt-6 w-full">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                <div class="p-4 rounded-xl text-[10px] font-black uppercase tracking-widest mb-4 
-                    {% if category == 'success' %}bg-emerald-50 text-emerald-600 border border-emerald-100
-                    {% elif category == 'danger' %}bg-red-50 text-red-600 border border-red-100
-                    {% else %}bg-blue-50 text-blue-600 border border-blue-100{% endif %}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
-
     <main class="flex-grow">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="border-t border-gray-100 py-12 text-center opacity-40">
-        <p class="text-[8px] font-black uppercase tracking-[0.3em] text-gray-400">
-            FlipTrybe Infrastructure v2.5 // Secure Grid Protocol // Render Node Oregon
+    <footer class="border-t-2 border-black py-12 text-center bg-white">
+        <p class="text-[9px] font-black uppercase tracking-[0.4em] text-gray-400">
+            FlipTrybe Logistics & Declutter // Verified Safe Payments // © 2026
         </p>
     </footer>
 
