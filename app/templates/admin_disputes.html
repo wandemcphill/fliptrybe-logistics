@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-12">
+    
+    <div class="mb-12">
+        <div class="flex items-center gap-3 mb-2">
+            <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+            <span class="text-[10px] font-black uppercase tracking-[0.3em] text-red-600">Dispute Resolution Terminal // Level 5 Clearance</span>
+        </div>
+        <h1 class="text-4xl font-black uppercase italic tracking-tighter">Conflict <span class="text-gray-400">Audit</span></h1>
+    </div>
+
+    <div class="grid grid-cols-1 gap-8">
+        {% if disputes %}
+            {% for dispute in disputes %}
+            <div class="bg-white border-2 border-black p-8 shadow-[12px_12px_0px_0px_rgba(220,38,38,1)] transition-all hover:shadow-[16px_16px_0px_0px_rgba(220,38,38,1)]">
+                <div class="flex flex-col lg:flex-row justify-between gap-8">
+                    
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <span class="bg-red-600 text-white px-3 py-1 text-[9px] font-black uppercase tracking-widest italic">Vault Frozen</span>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Handshake ID: #{{ dispute.order.handshake_id }}</span>
+                        </div>
+                        <h3 class="text-2xl font-black uppercase mb-2">{{ dispute.reason }}</h3>
+                        <p class="text-sm font-bold text-gray-600 leading-relaxed mb-6 bg-gray-50 p-6 border-l-4 border-red-600 italic">
+                            "{{ dispute.description }}"
+                        </p>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-gray-100">
+                            <div>
+                                <p class="text-[9px] font-black text-gray-400 uppercase mb-1 tracking-widest">Claimant (Buyer)</p>
+                                <p class="text-[11px] font-black uppercase">{{ dispute.claimant.name }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-black text-gray-400 uppercase mb-1 tracking-widest">Merchant (Seller)</p>
+                                <p class="text-[11px] font-black uppercase">{{ dispute.order.listing.seller.name }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-black text-gray-400 uppercase mb-1 tracking-widest">Asset Value</p>
+                                <p class="text-[11px] font-black text-red-600">₦{{ "{:,.0f}".format(dispute.order.total_price) }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-black text-gray-400 uppercase mb-1 tracking-widest">Incident Date</p>
+                                <p class="text-[11px] font-black">{{ dispute.created_at.strftime('%d %b %Y') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:w-72 flex flex-col gap-3">
+                        <p class="text-[9px] font-black text-center uppercase tracking-widest text-gray-400 mb-2">Verdict Selection</p>
+                        
+                        <form action="{{ url_for('main.resolve_dispute', dispute_id=dispute.id, command='pay_merchant') }}" method="POST">
+                            <button type="submit" onclick="return confirm('VERDICT: Force payment to Merchant? This action is irreversible.')" 
+                                    class="w-full bg-black text-white py-4 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all">
+                                Release to Merchant
+                            </button>
+                        </form>
+
+                        <form action="{{ url_for('main.resolve_dispute', dispute_id=dispute.id, command='refund_buyer') }}" method="POST">
+                            <button type="submit" onclick="return confirm('VERDICT: Refund full amount to Buyer? This action is irreversible.')" 
+                                    class="w-full border-2 border-black py-4 text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">
+                                Refund to Buyer
+                            </button>
+                        </form>
+                        
+                        <div class="mt-4 p-4 bg-blue-50 border border-blue-100">
+                            <p class="text-[8px] font-bold text-blue-600 leading-tight uppercase">
+                                <i class="fas fa-info-circle mr-1"></i> Verdicts will instantly update both user ledgers and release the Vault hold.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="py-32 border-2 border-dashed border-gray-200 text-center bg-white">
+                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-shield-alt text-gray-300 text-2xl"></i>
+                </div>
+                <p class="text-[10px] font-black uppercase text-gray-400 tracking-[0.3em]">Grid Stabilized // No active disputes</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

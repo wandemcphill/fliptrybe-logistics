@@ -7,22 +7,19 @@
         <div>
             <div class="flex items-center gap-3 mb-2">
                 <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">Command Node</span>
+                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">Command Node // ID-{{ current_user.id }}</span>
             </div>
-            <h1 class="text-4xl font-black uppercase italic tracking-tighter">My <span class="text-gray-400">Dashboard</span></h1>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">
-                Welcome back, {{ current_user.name }}
-            </p>
+            <h1 class="text-4xl font-black uppercase tracking-tighter italic">My <span class="text-gray-400">Dashboard</span></h1>
         </div>
 
-        <div class="bg-black text-white p-6 rounded-[24px] flex items-center gap-8 shadow-xl shadow-gray-200">
+        <div class="bg-black text-white p-6 border-2 border-black flex items-center gap-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
             <div>
-                <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Liquidity Available</p>
+                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Liquidity Available</p>
                 <h2 class="text-3xl font-black">₦{{ "{:,.2f}".format(current_user.wallet_balance) }}</h2>
             </div>
             <div class="h-10 w-px bg-gray-800"></div>
-            <a href="{{ url_for('main.withdraw') }}" class="group flex flex-col items-center gap-1 hover:text-emerald-400 transition-colors">
-                <div class="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center group-hover:bg-gray-800 transition-colors">
+            <a href="{{ url_for('main.withdraw') }}" class="group flex flex-col items-center gap-1 hover:text-blue-400 transition-colors">
+                <div class="w-10 h-10 bg-gray-900 border border-gray-700 flex items-center justify-center group-hover:border-blue-400 transition-colors">
                     <i class="fas fa-arrow-up rotate-45 text-xs"></i>
                 </div>
                 <span class="text-[8px] font-black uppercase tracking-widest">Withdraw</span>
@@ -33,99 +30,112 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
         
         <div class="lg:col-span-2">
-            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8">Incoming Assets</h3>
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8">Active Acquisitions</h3>
             
             {% if orders_bought %}
                 <div class="space-y-6">
                     {% for order in orders_bought %}
-                    <div class="bg-white border border-gray-100 p-6 rounded-[32px] hover:shadow-lg transition-all duration-300">
+                    <div class="bg-white border-2 border-black p-6 transition-all hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.05)]">
                         <div class="flex justify-between items-start mb-6">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden">
-                                    <img src="{{ url_for('static', filename='products/' + order.listing.image_filename) }}" class="w-full h-full object-cover">
+                                <div class="w-16 h-16 bg-gray-100 border border-black overflow-hidden">
+                                    <img src="{{ url_for('static', filename='uploads/products/' + order.listing.image_filename) }}" class="w-full h-full object-cover">
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-black uppercase text-gray-900">{{ order.listing.title }}</h4>
-                                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ref: #{{ order.handshake_id }}</p>
+                                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">#{{ order.handshake_id }}</p>
                                 </div>
                             </div>
                             <div class="text-right">
                                 <span class="block text-sm font-black text-gray-900">₦{{ "{:,.0f}".format(order.total_price) }}</span>
-                                <span class="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest 
-                                    {% if order.status == 'Escrowed' %}bg-blue-50 text-blue-600
-                                    {% elif order.status == 'Released' %}bg-emerald-50 text-emerald-600
-                                    {% elif order.status == 'Disputed' %}bg-red-50 text-red-600{% endif %}">
+                                <span class="px-2 py-1 text-[8px] font-black uppercase tracking-widest border border-blue-600 text-blue-600">
                                     {{ order.status }}
                                 </span>
                             </div>
                         </div>
 
-                        <div class="mb-6">
-                            <div class="flex justify-between text-[9px] font-bold uppercase text-gray-400 mb-2">
-                                <span>Secured</span>
-                                <span class="{{ 'text-blue-600' if order.delivery_status != 'Pending' }}">In Transit</span>
-                                <span class="{{ 'text-emerald-600' if order.delivery_status == 'Completed' }}">Delivered</span>
+                        <div class="mb-8">
+                            <div class="flex justify-between text-[8px] font-black uppercase text-gray-400 mb-2 tracking-widest">
+                                <span class="text-blue-600">Secured</span>
+                                <span class="{{ 'text-blue-600' if order.status in ['Dispatched', 'In Transit', 'Delivered', 'Completed'] }}">In Transit</span>
+                                <span class="{{ 'text-emerald-600' if order.status in ['Delivered', 'Completed'] }}">Delivered</span>
                             </div>
-                            
-                            <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                            <div class="w-full bg-gray-100 h-1 overflow-hidden border border-gray-200">
                                 <div class="bg-black h-full transition-all duration-1000 
-                                    {% if order.delivery_status == 'Completed' %}w-full
-                                    {% elif order.delivery_status == 'In Transit' %}w-2/3
+                                    {% if order.status == 'Completed' or order.status == 'Delivered' %}w-full
+                                    {% elif order.status == 'In Transit' or order.status == 'Dispatched' %}w-2/3
                                     {% else %}w-1/3{% endif %}">
                                 </div>
                             </div>
                         </div>
 
-                        {% if order.status == 'Escrowed' %}
-                        <div class="flex gap-3 pt-4 border-t border-gray-50">
-                            <form action="{{ url_for('main.release_funds', order_id=order.id) }}" method="POST" class="flex-grow">
-                                <button type="submit" onclick="return confirm('Are you sure you have received the item? This releases funds to the seller.')" 
-                                        class="w-full py-3 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100">
-                                    Confirm Receipt & Release Funds
-                                </button>
+                        {% if order.status != 'Completed' %}
+                        <div class="pt-6 border-t border-gray-100">
+                            <form action="{{ url_for('main.release_funds', order_id=order.id) }}" method="POST">
+                                <div class="flex flex-col md:flex-row gap-4">
+                                    <div class="flex-grow">
+                                        <label class="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Transport Service Quality</label>
+                                        <select name="pilot_rating" class="w-full bg-gray-50 border-2 border-black p-3 text-[10px] font-black uppercase focus:bg-white outline-none">
+                                            <option value="5">Excellent Pilot (5/5)</option>
+                                            <option value="4">Good Transport (4/5)</option>
+                                            <option value="3">Average Service (3/5)</option>
+                                            <option value="2">Poor Performance (2/5)</option>
+                                            <option value="1">Critical Issue (1/5)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="flex items-end gap-3 flex-shrink-0">
+                                        <button type="submit" onclick="return confirm('Confirm Receipt? This releases funds to the Seller instantly.')" 
+                                                class="h-[48px] px-8 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-emerald-50">
+                                            Confirm Receipt // Release Funds
+                                        </button>
+                                        <a href="{{ url_for('main.raise_dispute', order_id=order.id) }}" class="h-[48px] px-6 flex items-center border-2 border-black text-black text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white hover:border-red-600 transition-all">
+                                            Report Issue
+                                        </a>
+                                    </div>
+                                </div>
                             </form>
-                            
-                            <a href="{{ url_for('main.raise_dispute', order_id=order.id) }}" class="px-6 py-3 border border-gray-200 text-gray-500 rounded-xl text-[9px] font-black uppercase tracking-widest hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-all">
-                                Report Issue
-                            </a>
+                        </div>
+                        {% else %}
+                        <div class="w-full py-4 bg-gray-50 text-gray-400 text-[10px] font-black uppercase text-center border-2 border-dashed border-gray-200">
+                            Asset Acquired // Handshake Complete
                         </div>
                         {% endif %}
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="bg-gray-50 rounded-[32px] p-12 text-center border-2 border-dashed border-gray-100">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No active acquisitions.</p>
+                <div class="py-20 border-2 border-dashed border-gray-200 text-center">
+                    <p class="text-[10px] font-black uppercase text-gray-400 tracking-widest">No active acquisitions recorded.</p>
                 </div>
             {% endif %}
         </div>
 
         <div>
-            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8">Financial Log</h3>
-            
-            <div class="bg-white border border-gray-100 rounded-[32px] p-6">
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8">Financial Ledger</h3>
+            <div class="bg-white border-2 border-black p-6">
                 {% if history %}
-                    <div class="divide-y divide-gray-50">
+                    <div class="divide-y divide-gray-100">
                         {% for tx in history %}
                         <div class="py-4 flex justify-between items-center group">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center 
+                                <div class="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center 
                                     {% if tx.type == 'Credit' %}bg-emerald-50 text-emerald-500{% else %}bg-red-50 text-red-500{% endif %}">
                                     <i class="fas fa-{% if tx.type == 'Credit' %}arrow-down{% else %}arrow-up{% endif %} text-[10px]"></i>
                                 </div>
                                 <div>
-                                    <p class="text-[9px] font-black uppercase text-gray-900 tracking-wide">{{ tx.reference }}</p>
+                                    <p class="text-[9px] font-black uppercase text-gray-900">{{ tx.reference }}</p>
                                     <p class="text-[8px] font-bold text-gray-400 uppercase">{{ tx.timestamp.strftime('%d %b') }}</p>
                                 </div>
                             </div>
-                            <span class="text-xs font-black {% if tx.type == 'Credit' %}text-emerald-600{% else %}text-gray-900{% endif %}">
+                            <span class="text-[10px] font-black {% if tx.type == 'Credit' %}text-emerald-600{% else %}text-gray-900{% endif %}">
                                 {% if tx.type == 'Credit' %}+{% else %}-{% endif %}₦{{ "{:,.0f}".format(tx.amount) }}
                             </span>
                         </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-[10px] font-bold text-gray-400 uppercase text-center py-4">Ledger Empty.</p>
+                    <p class="text-[10px] font-black uppercase text-gray-400 text-center py-10">Ledger is Empty.</p>
                 {% endif %}
             </div>
         </div>

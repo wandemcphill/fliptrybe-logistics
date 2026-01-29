@@ -1,7 +1,10 @@
-from app import create_app
+import os
+from app import create_app, db
+from app.models import User, Listing, Order, Transaction, Notification, PriceHistory
 
-app = create_app()
+# Initialize the synchronized core
+app, celery = create_app()
 
 if __name__ == '__main__':
-    # debug=True allows the server to auto-reload when you save changes
-    app.run(debug=True)
+    # Standard local ignition on Port 5000
+    app.run(host='0.0.0.0', port=5000, debug=True)

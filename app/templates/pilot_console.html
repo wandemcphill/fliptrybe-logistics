@@ -3,76 +3,121 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-6 py-12">
     
-    <div class="flex items-center gap-3 mb-12">
-        <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
-        <h1 class="text-3xl font-black uppercase italic tracking-tighter">Pilot <span class="text-gray-400">Console</span></h1>
+    <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
+                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600">Flight Terminal // Pilot ID-{{ current_user.id }}</span>
+            </div>
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter">Pilot <span class="text-gray-400">Console</span></h1>
+        </div>
+        <div class="bg-black text-white px-6 py-3 border-2 border-black flex items-center gap-4">
+            <span class="text-[9px] font-black uppercase tracking-widest text-gray-400">Pilot Reliability</span>
+            <span class="text-xl font-black text-emerald-500">{{ current_user.pilot_score }}</span>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
         
-        <div>
-            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8">Active Missions</h3>
-            
+        <div class="lg:col-span-1">
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8">Available Sorties</h3>
+            {% if available %}
+                <div class="space-y-4">
+                    {% for order in available %}
+                    <div class="bg-black text-white p-6 border-2 border-black shadow-[8px_8px_0px_0px_rgba(37,99,235,1)] transition-all hover:translate-x-1">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[9px] font-black uppercase text-blue-500 italic">#{{ order.handshake_id }}</span>
+                            <span class="text-[11px] font-black text-emerald-400 italic">₦5,000 Fee</span>
+                        </div>
+                        <h4 class="text-sm font-black uppercase mb-1">{{ order.listing.title }}</h4>
+                        <p class="text-[10px] text-gray-400 mb-6 uppercase tracking-widest">
+                            <i class="fas fa-map-marker-alt mr-1"></i> Pickup: {{ order.listing.state }}
+                        </p>
+                        
+                        <form action="{{ url_for('main.claim_mission', order_id=order.id) }}" method="POST">
+                            <button type="submit" class="w-full bg-white text-black py-3 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+                                Claim Mission
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-10 border-2 border-dashed border-gray-200 text-center bg-gray-50">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Grid is Clear // No Pending Pickups</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="lg:col-span-1">
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-blue-600 mb-8">Active Mission Control</h3>
             {% if active %}
                 <div class="space-y-6">
                     {% for order in active %}
-                    <div class="bg-white border-2 border-blue-50 p-6 rounded-[32px] shadow-xl shadow-blue-100/50">
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="bg-blue-600 text-white px-3 py-1 rounded text-[9px] font-black uppercase tracking-widest">
-                                {{ order.delivery_status }}
-                            </span>
-                            <span class="text-[9px] font-black uppercase text-gray-300">#{{ order.handshake_id }}</span>
+                    <div class="bg-white border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="bg-blue-600 text-white px-3 py-1 text-[8px] font-black uppercase tracking-widest italic">{{ order.status }}</span>
+                            <span class="text-[9px] font-black uppercase text-gray-300">Signal: #{{ order.handshake_id }}</span>
                         </div>
                         
-                        <h4 class="text-lg font-black uppercase text-gray-900 mb-2">{{ order.listing.title }}</h4>
-                        <div class="flex gap-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-6">
-                            <span><i class="fas fa-map-marker-alt mr-1"></i> {{ order.listing.state }}</span>
-                            <span><i class="fas fa-box mr-1"></i> {{ order.listing.category }}</span>
+                        <div class="bg-gray-50 p-4 border-2 border-black mb-6">
+                            <p class="text-[9px] font-black uppercase text-gray-400 mb-1">Target Asset</p>
+                            <p class="text-sm font-black uppercase text-gray-900">{{ order.listing.title }}</p>
+                            <p class="text-[9px] font-bold text-gray-500 mt-3 uppercase tracking-widest">State: {{ order.listing.state }}</p>
                         </div>
 
                         <div class="space-y-3">
-                            {% if order.delivery_status == 'Assigned' or order.delivery_status == 'Pending' %}
-                            <form action="{{ url_for('main.update_delivery', order_id=order.id, status='In Transit') }}" method="POST">
-                                <button class="w-full py-4 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition-all">
-                                    Initiate Transport
-                                </button>
-                            </form>
-                            {% endif %}
-
-                            {% if order.delivery_status == 'In Transit' %}
-                            <form action="{{ url_for('main.update_delivery', order_id=order.id, status='Delivered') }}" method="POST" enctype="multipart/form-data" class="bg-gray-50 p-4 rounded-xl">
-                                <label class="block text-[8px] font-black uppercase tracking-widest text-gray-400 mb-2">Upload Proof of Delivery</label>
-                                <input type="file" name="delivery_photo" required class="block w-full text-[10px] text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 mb-3">
-                                <button class="w-full py-3 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all">
-                                    Confirm Drop-off
-                                </button>
-                            </form>
+                            {% if order.status == 'Dispatched' %}
+                                <form action="{{ url_for('main.update_delivery', order_id=order.id, status='In Transit') }}" method="POST">
+                                    <button class="w-full py-4 bg-black text-white text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all">
+                                        Confirm Pickup // Start Transit
+                                    </button>
+                                </form>
+                            {% elif order.status == 'In Transit' %}
+                                <form action="{{ url_for('main.update_delivery', order_id=order.id, status='Delivered') }}" method="POST" enctype="multipart/form-data" class="bg-blue-50 p-4 border border-blue-100">
+                                    <label class="block text-[8px] font-black uppercase tracking-widest text-blue-600 mb-3">Upload Proof of Delivery (PoD)</label>
+                                    <input type="file" name="delivery_photo" required class="text-[10px] block w-full mb-4 bg-white p-2 border border-blue-200">
+                                    <button class="w-full py-4 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all">
+                                        Signal Delivery Complete
+                                    </button>
+                                </form>
+                            {% elif order.status == 'Delivered' %}
+                                <div class="w-full py-4 bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest text-center border-2 border-emerald-100 italic">
+                                    Awaiting Buyer Confirmation
+                                </div>
                             {% endif %}
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="bg-gray-50 rounded-[32px] p-12 text-center border-2 border-dashed border-gray-100">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No active missions assigned.</p>
+                <div class="p-10 bg-gray-50 border-2 border-dashed border-gray-200 text-center">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilot Currently Standby</p>
                 </div>
             {% endif %}
         </div>
 
-        <div>
+        <div class="lg:col-span-1">
             <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8">Flight Log</h3>
-            <div class="bg-white border border-gray-100 rounded-[32px] p-8">
+            <div class="bg-white border-2 border-gray-100 p-6">
                 {% if history %}
-                    <ul class="space-y-4">
+                    <ul class="space-y-6">
                         {% for order in history %}
-                        <li class="flex justify-between items-center opacity-60 hover:opacity-100 transition-opacity">
-                            <span class="text-xs font-black text-gray-900">{{ order.listing.title }}</span>
-                            <span class="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Completed</span>
+                        <li class="flex justify-between items-center border-b border-gray-50 pb-4 last:border-0">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-black uppercase text-gray-900 leading-tight mb-1">{{ order.listing.title }}</span>
+                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">HS: {{ order.handshake_id }} // {{ order.timestamp.strftime('%d %b %Y') }}</span>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
+                                <i class="fas fa-check text-emerald-500 text-xs"></i>
+                            </div>
                         </li>
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <p class="text-[10px] font-bold text-gray-400 uppercase text-center">Logbook is empty.</p>
+                    <div class="text-center py-10">
+                        <p class="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em]">Logbook Empty</p>
+                    </div>
                 {% endif %}
             </div>
         </div>

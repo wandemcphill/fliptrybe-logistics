@@ -1,111 +1,81 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, FloatField, TextAreaField, SelectField, DecimalField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, DecimalField, TextAreaField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
 from app.models import User
 
-# --- 👥 IDENTITY PROTOCOLS ---
+# --- 🛰️ 1. IDENTITY FORMS (Registration & Access) ---
 
 class RegistrationForm(FlaskForm):
-    """
-    Standard Node Initialization Form.
-    Includes database checks to prevent duplicate identities.
-    """
-    name = StringField('Full Name', validators=[DataRequired(), Length(min=2, max=150)])
-    email = StringField('Email Node', validators=[DataRequired(), Email()])
-    phone = StringField('Phone Signal', validators=[DataRequired(), Length(min=10, max=15)])
-    password = PasswordField('Security Key', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Key', validators=[DataRequired(), EqualTo('password')])
+    """Build #7: Secure Identity Node Initialization."""
+    name = StringField('Full Name', 
+                       validators=[DataRequired(), Length(min=2, max=150)])
+    email = StringField('Grid Email', 
+                        validators=[DataRequired(), Email(), Length(max=150)])
+    phone = StringField('Signal Phone (Nigerian Format)', 
+                        validators=[DataRequired(), Length(min=11, max=15)])
+    password = PasswordField('Access Key', 
+                             validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Confirm Access Key', 
+                                     validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Initialize Node')
 
+    # 🛡️ Audit: Prevent Duplicate Identity Nodes
     def validate_email(self, email):
         user = User.query.filter_by(email=email.data).first()
         if user:
-            raise ValidationError('This email signal is already active on the Grid. Please login.')
+            raise ValidationError('This email is already registered in the grid.')
 
     def validate_phone(self, phone):
         user = User.query.filter_by(phone=phone.data).first()
         if user:
-            raise ValidationError('This phone node is already registered.')
+            raise ValidationError('This phone signal is already linked to a node.')
 
 class LoginForm(FlaskForm):
-    email = StringField('Email Node', validators=[DataRequired(), Email()])
-    password = PasswordField('Security Key', validators=[DataRequired()])
-    remember = BooleanField('Remember Session')
-    submit = SubmitField('Authenticate')
+    """Access Control Handshake."""
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember = BooleanField('Maintain Connection')
+    submit = SubmitField('Authorize Access')
 
-class OTPForm(FlaskForm):
-    """6-Digit Security Handshake for Phone Verification."""
-    otp = StringField('Security Code', validators=[DataRequired(), Length(min=6, max=6)])
-    submit = SubmitField('Verify Signal')
-
-class KYCForm(FlaskForm):
-    """Identity Verification Uploads (Tier 2 Access)."""
-    selfie = FileField('Live Capture', validators=[FileAllowed(['jpg', 'png', 'jpeg'])])
-    id_card = FileField('Government ID', validators=[FileAllowed(['jpg', 'png', 'jpeg', 'pdf'])])
-    submit = SubmitField('Upload Documents')
-
-# --- 📦 ASSET DEPLOYMENT ---
-
-class ListingForm(FlaskForm):
-    """
-    Asset Injection Form.
-    Enforces strict categorization for the 'market/shortlet/declutter' logic.
-    """
-    title = StringField('Asset Title', validators=[DataRequired(), Length(max=100)])
-    price = DecimalField('Unit Price (₦)', validators=[DataRequired(), NumberRange(min=500, message="Minimum listing price is ₦500")])
-    
-    category = SelectField('Category', choices=[
-        ('Electronics', 'Electronics'),
-        ('Vehicles', 'Vehicles'),
-        ('Real Estate', 'Real Estate'),
-        ('Fashion', 'Fashion'),
-        ('Home & Garden', 'Home & Garden'),
-        ('Services', 'Services')
-    ], validators=[DataRequired()])
-    
-    # Critical for filtering logic in main.py
-    section = SelectField('Grid Section', choices=[
-        ('market', 'Standard Market'),
-        ('shortlet', 'Shortlet/Rental'),
-        ('declutter', 'Declutter (Used)')
-    ], validators=[DataRequired()])
-    
-    # Regional Nodes
-    state = SelectField('Location Node', choices=[
-        ('Lagos', 'Lagos'),
-        ('Abuja', 'Abuja'),
-        ('Rivers', 'Rivers'),
-        ('Kano', 'Kano'),
-        ('Oyo', 'Oyo'),
-        ('Enugu', 'Enugu')
-    ], validators=[DataRequired()])
-    
-    description = TextAreaField('Technical Specs', validators=[DataRequired()])
-    image = FileField('Asset Visual', validators=[FileAllowed(['jpg', 'png', 'jpeg'])])
-    submit = SubmitField('Deploy Asset')
-
-# --- 💸 FINANCIAL GATEWAYS ---
+# --- 💸 2. FINANCIAL FORMS (Liquidity Exits) ---
 
 class WithdrawalForm(FlaskForm):
-    """Liquidity Extraction Request."""
-    amount = DecimalField('Liquidity Amount (₦)', validators=[DataRequired(), NumberRange(min=1000, message="Minimum withdrawal is ₦1,000")])
-    bank_name = StringField('Bank Name', validators=[DataRequired()])
-    account_number = StringField('Account Number', validators=[DataRequired(), Length(min=10, max=10, message="Account number must be 10 digits")])
-    account_name = StringField('Account Name', validators=[DataRequired()])
-    submit = SubmitField('Transmit Request')
+    """Build #10: Liquidity Exit Protocol."""
+    amount = DecimalField('Withdrawal Amount (₦)', 
+                          validators=[DataRequired(), NumberRange(min=1000)], 
+                          places=2)
+    bank_name = SelectField('Destination Bank', 
+                            choices=[('access', 'Access Bank'), ('gtb', 'GTBank'), ('zenith', 'Zenith Bank'), ('opay', 'OPay'), ('kuda', 'Kuda Bank')],
+                            validators=[DataRequired()])
+    account_number = StringField('Account Number', 
+                                 validators=[DataRequired(), Length(min=10, max=10)])
+    account_name = StringField('Account Holder Name', 
+                               validators=[DataRequired(), Length(max=100)])
+    submit = SubmitField('Request Liquidity Exit')
 
-# --- ⚖️ DISPUTE RESOLUTION ---
+# --- ⚖️ 3. JUDICIAL FORMS (Conflict Resolution) ---
 
 class DisputeForm(FlaskForm):
-    """Emergency Brake Protocol."""
-    reason = SelectField('Issue Type', choices=[
-        ('Item Not Received', 'Item Not Received'),
-        ('Item Damaged', 'Item Damaged/Defective'),
-        ('Wrong Item', 'Wrong Item Sent'),
-        ('Fraud Suspicion', 'Fraud Suspicion')
-    ], validators=[DataRequired()])
-    
-    description = TextAreaField('Detailed Report', validators=[DataRequired(), Length(min=20, message="Please provide at least 20 characters of detail.")])
-    evidence = FileField('Visual Evidence (Optional)', validators=[FileAllowed(['jpg', 'png', 'mp4'])])
-    submit = SubmitField('Freeze Escrow & Open Ticket')
+    """Build #6: Judicial Conflict Documentation."""
+    reason = SelectField('Primary Conflict', 
+                         choices=[('no_delivery', 'Asset Not Received'), 
+                                  ('wrong_item', 'Wrong Asset Delivered'), 
+                                  ('damaged', 'Asset Compromised/Damaged'), 
+                                  ('fraud', 'Suspicious Activity Detected')],
+                         validators=[DataRequired()])
+    description = TextAreaField('Detailed Incident Log', 
+                                validators=[DataRequired(), Length(min=20, max=1000)])
+    submit = SubmitField('Signal Dispute // Freeze Vault')
+
+# --- 📦 4. ASSET FORMS (Marketplace Listings) ---
+
+class ListingForm(FlaskForm):
+    """Asset Deployment Protocol."""
+    title = StringField('Asset Title', validators=[DataRequired(), Length(max=100)])
+    description = TextAreaField('Technical Description', validators=[DataRequired(), Length(max=2000)])
+    price = DecimalField('Liquidity Signal (Price)', validators=[DataRequired(), NumberRange(min=1)], places=2)
+    category = SelectField('Classification', 
+                           choices=[('electronics', 'Electronics'), ('fashion', 'Fashion'), ('vehicles', 'Vehicles'), ('real_estate', 'Real Estate')],
+                           validators=[DataRequired()])
+    state = StringField('Deployment State (e.g. Lagos)', validators=[DataRequired(), Length(max=50)])
+    submit = SubmitField('Deploy Asset to Grid')

@@ -1,37 +1,43 @@
-# --- Python & Virtual Env ---
-__pycache__/
-*.py[cod]
-venv/
-env/
+# --- 🛰️ 1. IDENTITY & SECURITY ---
 .env
-
-# --- Database ---
-*.db
-*.sqlite3
-fliptrybe.db
-fliptrybe_v6.db
 instance/
+.webassets-cache
+.secrets
+*.pem
+*.key
 
-# --- IDE Settings ---
+# --- 🧬 2. DATABASE NODES ---
+*.db
+*.sqlite
+*.sqlite3
+!migrations/
+
+# --- 🐍 3. VIRTUAL ENVIRONMENT (Synced) ---
+venv/
+ENV/
+env/
+# Explicitly ignoring your scripts and lib folders
+venv/scripts/
+venv/lib/
+venv/include/
+pyvenv.cfg
+
+# --- 📜 4. LOGGING NODES (Synced) ---
+logs/
+*.log
+
+# --- 🚁 5. BACKGROUND ENGINE ---
+__pycache__/
+celerybeat-schedule
+.pytest_cache/
+
+# --- 🖼️ 6. ASSET NODES ---
+app/static/uploads/products/*
+app/static/uploads/deliveries/*
+!app/static/uploads/products/.gitkeep
+!app/static/uploads/deliveries/.gitkeep
+
+# --- 💻 7. OS & IDE ---
+.DS_Store
 .vscode/
 .idea/
-.DS_Store
-
-# --- Static Assets (Keep folders, ignore files) ---
-# This ensures your 'avatars' and 'products' folders exist on GitHub
-# but doesn't upload your personal test photos.
-app/static/avatars/*
-!app/static/avatars/default.jpg
-!app/static/avatars/.gitkeep
-
-app/static/products/*
-!app/static/products/.gitkeep
-
-app/static/kyc_docs/*
-!app/static/kyc_docs/.gitkeep
-
-app/static/disputes/*
-!app/static/disputes/.gitkeep
-
-app/static/deliveries/*
-!app/static/deliveries/.gitkeep

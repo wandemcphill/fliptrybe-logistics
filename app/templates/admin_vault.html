@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-12">
+    
+    <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-red-600">Level 5 Authorization // Vault Admin</span>
+            </div>
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter">Treasury <span class="text-gray-400">Control</span></h1>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-black text-white p-8 border-2 border-red-600 shadow-[8px_8px_0px_0px_rgba(220,38,38,1)]">
+            <p class="text-[9px] font-black uppercase text-red-600 tracking-[0.2em] mb-4">Vault Emergency Lock</p>
+            <form action="{{ url_for('main.vault_emergency_lock') }}" method="POST" onsubmit="return confirm('🚨 SIGNAL OVERRIDE: This will freeze ALL pending liquidity exits instantly. Proceed?')">
+                <button type="submit" class="text-2xl font-black italic hover:text-red-600 transition-colors uppercase text-left leading-none">
+                    🛑 Trigger <br> Lock
+                </button>
+            </form>
+        </div>
+
+        <div class="md:col-span-2 bg-white border-2 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-center">
+            <p class="text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Escrow Liquidity (Heatmap)</p>
+            <div class="flex items-baseline gap-3">
+                <h2 class="text-5xl font-black tracking-tighter">₦{{ "{:,.0f}".format(vault_total) }}</h2>
+                <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Locked In Grid</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+        
+        <div class="bg-white border-2 border-black p-8 shadow-[12px_12px_0px_0px_rgba(37,99,235,1)]">
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-blue-600 mb-8">Pending Payouts</h3>
+            
+            {% if pending_wdr %}
+                <div class="space-y-8">
+                    {% for wdr in pending_wdr %}
+                    <div class="border-b border-gray-100 pb-8 last:border-0">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-2xl font-black">₦{{ "{:,.2f}".format(wdr.amount) }}</p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ wdr.user.name }} // {{ wdr.bank_name }}</p>
+                            </div>
+                            <form action="{{ url_for('main.approve_withdrawal', wdr_id=wdr.id) }}" method="POST">
+                                <button class="bg-black text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all">
+                                    Mark as Paid
+                                </button>
+                            </form>
+                        </div>
+                        <div class="bg-gray-50 p-4 border border-gray-100 font-mono">
+                            <p class="text-[9px] font-black text-gray-400 uppercase mb-1 tracking-widest">Target Account</p>
+                            <p class="text-xs font-black">ACC: {{ wdr.account_number }}</p>
+                            <p class="text-xs font-bold text-blue-600 uppercase">{{ wdr.account_name }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="py-20 text-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Vault is balanced // No pending signals</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="bg-black text-white p-8">
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8">Escrow Release Audit</h3>
+            <div class="space-y-4">
+                {% if releases %}
+                    {% for tx in releases %}
+                    <div class="flex justify-between items-center text-[10px] font-mono border-b border-gray-800 pb-3 group">
+                        <div class="flex flex-col">
+                            <span class="text-blue-500 group-hover:text-white transition-colors">{{ tx.reference }}</span>
+                            <span class="text-[8px] opacity-40 uppercase">{{ tx.timestamp.strftime('%d %b // %H:%M') }}</span>
+                        </div>
+                        <span class="font-black text-xs text-emerald-400">+₦{{ "{:,.0f}".format(tx.amount) }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-[10px] font-black text-gray-600 uppercase text-center py-20">No release signals detected</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-20">
+        <div class="flex items-center gap-4 mb-8">
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400">Merchant Identity Registry</h3>
+            <div class="h-px bg-gray-200 flex-grow"></div>
+        </div>
+        
+        <div class="bg-white border-2 border-black overflow-hidden shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-black text-white">
+                    <tr>
+                        <th class="p-5 text-[10px] font-black uppercase tracking-widest">Merchant Name // Signal</th>
+                        <th class="p-5 text-[10px] font-black uppercase tracking-widest">Tier Rank</th>
+                        <th class="p-5 text-[10px] font-black uppercase tracking-widest text-center">Status Control</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% if all_merchants %}
+                        {% for user in all_merchants %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="p-5">
+                                <p class="text-sm font-black uppercase text-gray-900">{{ user.name }}</p>
+                                <p class="text-[9px] font-bold text-gray-400 tracking-widest">{{ user.email }}</p>
+                            </td>
+                            <td class="p-5">
+                                <span class="px-3 py-1 bg-gray-100 text-[8px] font-black uppercase italic tracking-widest border border-gray-200">
+                                    {{ user.merchant_tier }}
+                                </span>
+                            </td>
+                            <td class="p-5 text-center">
+                                <form action="{{ url_for('main.toggle_verification', user_id=user.id) }}" method="POST">
+                                    <button type="submit" class="px-6 py-2 text-[9px] font-black uppercase tracking-widest border-2 border-black transition-all
+                                        {{ 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100' if user.is_verified else 'bg-white text-black hover:bg-black hover:text-white' }}">
+                                        {{ 'Verified Node' if user.is_verified else 'Verify Node' }}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="p-10 text-center text-[10px] font-black uppercase text-gray-300 tracking-widest italic">
+                                No merchant nodes registered in grid
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

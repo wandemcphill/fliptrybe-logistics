@@ -1,65 +1,49 @@
 services:
-  # 🚀 SERVICE 1: THE WEB NODE
+  # --- 🛰️ NODE 1: THE WEB ENGINE ---
   - type: web
-    name: fliptrybe-core
-    runtime: python
-    region: oregon
+    name: fliptrybe-web
     plan: starter
-    buildCommand: |
-      pip install -r requirements.txt
-      # Create Disk Symlinks
-      mkdir -p /var/lib/data/products /var/lib/data/avatars /var/lib/data/deliveries
-      ln -sfn /var/lib/data/products app/static/products
-      ln -sfn /var/lib/data/avatars app/static/avatars
-      ln -sfn /var/lib/data/deliveries app/static/deliveries
-    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 4
-    healthCheckPath: /login
-    disk:
-      name: fliptrybe-assets
-      mountPath: /var/lib/data
-      sizeGB: 1
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn run:app"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: fliptrybe-vault
+          name: fliptrybe-db
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: fliptrybe-synapse
+          name: fliptrybe-cache
           property: connectionString
-      - key: TERMII_API_KEY # 🟢 Swapped Twilio for your Termii Logic
-        sync: false
+      - fromGroup: fliptrybe-secrets
 
-  # ⚙️ SERVICE 2: THE WORKER NODE (Celery)
+  # --- 🚁 NODE 2: THE SIGNAL WORKER (CELERY) ---
   - type: worker
-    name: fliptrybe-engine
+    name: fliptrybe-worker
+    plan: starter
     runtime: python
-    region: oregon
-    buildCommand: pip install -r requirements.txt
-    startCommand: celery -A app.celery worker --loglevel=info
+    buildCommand: "./build.sh"
+    startCommand: "celery -A run.celery worker --loglevel=info"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: fliptrybe-vault
+          name: fliptrybe-db
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: fliptrybe-synapse
+          name: fliptrybe-cache
           property: connectionString
+      - fromGroup: fliptrybe-secrets
 
-  # ⚡ SERVICE 3: THE SYNAPSE (Redis)
+  # --- 🧪 NODE 3: THE CACHE (REDIS) ---
   - type: redis
-    name: fliptrybe-synapse
-    region: oregon
-    plan: starter
+    name: fliptrybe-cache
+    plan: free
     ipAllowList: []
 
-# 💾 DATABASES: THE VAULT (PostgreSQL)
+# --- Vault: THE INDUSTRIAL DATABASE (POSTGRES) ---
 databases:
-  - name: fliptrybe-vault
-    databaseName: fliptrybe
-    user: admin
+  - name: fliptrybe-db
     plan: starter
-    region: oregon

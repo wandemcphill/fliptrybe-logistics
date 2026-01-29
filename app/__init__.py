@@ -1,79 +1,66 @@
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from flask_bcrypt import Bcrypt
-from celery import Celery
+from flask_migrate import Migrate
+from config import Config
+from app.celery_utils import make_celery, init_celery_config
 
-# 1. Initialize extensions globally
+# --- 🛰️ 1. GLOBAL INFRASTRUCTURE NODES ---
 db = SQLAlchemy()
-bcrypt = Bcrypt()
 login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
+login_manager.login_message_category = 'info'
+migrate = Migrate()
+celery = None # Initialized via factory
 
-# 🟢 INITIALIZE CELERY GLOBALLY
-celery = Celery(__name__)
-
-def create_app():
+def create_app(config_class=Config):
+    """
+    The Application Factory: Synchronizes all nodes and starts the ignition sequence.
+    """
     app = Flask(__name__)
-    
-    # 🔐 PRODUCTION CONFIGURATION
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-key-123'
-    
-    # --- 💾 DATABASE ROUTING ---
-    db_url = os.environ.get('DATABASE_URL')
-    
-    if db_url:
-        if db_url.startswith("postgres://"):
-            db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
-        elif db_url.startswith("postgresql://"):
-            db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
-    
-    if os.environ.get('RENDER') and not db_url:
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////var/lib/data/fliptrybe.db'
-    else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'sqlite:///fliptrybe.db'
-    
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config.from_object(config_class)
 
-    # --- ⚡ REDIS & CELERY (HIGH PERFORMANCE CONFIG) ---
-    redis_url = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
-    
-    # 🛰️ Render Redis Fix: Force SSL requirements to none for internal networking
-    if "rediss://" in redis_url:
-        redis_url += "?ssl_cert_reqs=none"
-    
-    app.config['CELERY_BROKER_URL'] = redis_url
-    app.config['CELERY_RESULT_BACKEND'] = redis_url
-    
-    # 🧪 Connection Pool: Prevents 'Slowness' by reusing existing links
-    app.config['CELERY_REDIS_CONNECTION_POOL_KWARGS'] = {
-        'max_connections': 20,
-        'timeout': 30
-    }
-    # Prefetching ensures workers aren't idle
-    app.config['CELERY_WORKER_PREFETCH_MULTIPLIER'] = 1 
-
-    # 2. Bind extensions to app
+    # --- 🧬 2. DATABASE & SESSION SYNC ---
     db.init_app(app)
-    bcrypt.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message_category = 'info'
+    migrate.init_app(app, db)
 
-    # 3. Synchronize Celery with App Config
-    celery.conf.update(app.config)
+    # --- 🚁 3. BACKGROUND SIGNAL ENGINE (CELERY) ---
+    init_celery_config(app)
+    global celery
+    celery = make_celery(app)
+
+    # --- 📜 4. LOGGER NODE SYNCHRONIZATION ---
+    # Audit: Ensuring contact with /logs/fliptrybe.log
+    if not app.debug and not app.testing:
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
+        
+        # Rotating file handler: 10MB limit per file, keeping 10 logs max
+        file_handler = RotatingFileHandler('logs/fliptrybe.log', 
+                                           maxBytes=10240000, 
+                                           backupCount=10)
+        
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('🛰️  FlipTrybe Grid Startup Signal: Active')
+
+    # --- 🛡️ 5. BLUEPRINT REGISTRY (ROUTING HANDSHAKE) ---
+    from app.main import main as main_blueprint
+    from app.auth import auth as auth_blueprint
+    from app.admin import admin as admin_blueprint
     
-    # Task context bridging
-    class ContextTask(celery.Task):
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return self.run(*args, **kwargs)
-    celery.Task = ContextTask
+    # Synchronizing routes with the central core
+    app.register_blueprint(main_blueprint)
+    app.register_blueprint(auth_blueprint, url_prefix='/auth')
+    app.register_blueprint(admin_blueprint, url_prefix='/admin')
 
-    # 4. Register Blueprints
-    from app.main import main
-    from app.auth import auth
-    app.register_blueprint(main)
-    app.register_blueprint(auth)
-
-    return app
+    return app, celery

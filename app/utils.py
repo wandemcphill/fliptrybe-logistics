@@ -1,54 +1,79 @@
 import os
 import requests
 from flask import current_app
-from app import db, celery # 🟢 Integrated Celery
-from app.models import Notification
+from app import db, celery
 
-# --- 🛰️ SIGNAL TRANSMITTER (TERMII ASYNC) ---
+# --- 🎖️ 1. GRID PERFORMANCE PROTOCOLS (Build #1) ---
 
-@celery.task
+def update_merchant_tier(user_id):
+    """
+    Build #1: Automated Trust Signals.
+    Synchronizes with release_funds to promote merchants based on success.
+    """
+    from app.models import User, Order, Listing
+    
+    user = User.query.get(user_id)
+    if not user:
+        return None
+
+    # Audit successful handshake volume
+    success_count = Order.query.join(Listing).filter(
+        Listing.user_id == user.id, 
+        Order.status == 'Completed'
+    ).count()
+
+    # Tier Thresholds
+    if success_count >= 50:
+        user.merchant_tier = "Grid-Master"
+    elif success_count >= 10:
+        user.merchant_tier = "Verified Merchant"
+    else:
+        user.merchant_tier = "Novice"
+    
+    db.session.commit()
+    return user.merchant_tier
+
+# --- 🛰️ 2. SIGNAL TRANSMITTER (TERMII ASYNC) ---
+
+@celery.task(name='app.utils.transmit_termii_signal')
 def transmit_termii_signal(to_phone, message, channel="dnd"):
     """
-    Transmits an industrial-grade SMS signal via Termii in the background.
+    Industrial-grade SMS signal via Termii.
+    Offloaded to Celery to prevent web-node latency.
     """
     if not to_phone:
         return None
     
-    # 1. Standardize Phone Format
-    clean_phone = to_phone.strip()
+    # Standardize Nigerian Format
+    clean_phone = str(to_phone).strip()
     if clean_phone.startswith('0'):
         clean_phone = '234' + clean_phone[1:]
     elif not clean_phone.startswith('234'):
         clean_phone = '234' + clean_phone
 
-    # 2. Prepare Payload
     api_key = os.environ.get('TERMII_API_KEY')
-    sender_id = os.environ.get('TERMII_SENDER_ID', 'FlipTrybe')
+    url = "https://api.ng.termii.com/api/sms/send"
     
     payload = {
         "to": clean_phone,
-        "from": sender_id,
+        "from": os.environ.get('TERMII_SENDER_ID', 'FlipTrybe'),
         "sms": message,
         "type": "plain",
         "channel": channel,
         "api_key": api_key
     }
     
-    url = "https://api.ng.termii.com/api/sms/send"
     try:
-        # No context needed for requests, but api_key must be passed or pulled from env
         response = requests.post(url, json=payload, timeout=15)
         return response.json()
     except Exception as e:
-        print(f"⚠️ Worker Signal Failure: {str(e)}")
+        print(f"⚠️ SIGNAL FAILURE: Termii Node Unreachable: {str(e)}")
         return None
 
-# --- 🔐 SECURITY (OTP ASYNC) ---
-
-@celery.task
+@celery.task(name='app.utils.send_otp_signal')
 def send_otp_signal(phone_number):
-    """Sends OTP via Termii API as a background task."""
-    clean_phone = phone_number
+    """Build #7: Secure Identity Handshake via Numeric PIN."""
+    clean_phone = str(phone_number).strip()
     if clean_phone.startswith('0'):
         clean_phone = '234' + clean_phone[1:]
         
@@ -57,26 +82,27 @@ def send_otp_signal(phone_number):
         "api_key": os.environ.get('TERMII_API_KEY'),
         "message_type": "NUMERIC",
         "to": clean_phone,
-        "from": "FlipTrybe",
+        "from": os.environ.get('TERMII_SENDER_ID', 'FlipTrybe'),
         "channel": "dnd",
         "pin_attempts": 3,
         "pin_time_to_live": 5,
-        "pin_length": 6,
-        "pin_placeholder": "< 1234 >"
+        "pin_length": 6
     }
     try:
         response = requests.post(url, json=payload, timeout=15)
         return response.json()
     except Exception as e:
-        print(f"Termii OTP Error: {e}")
+        print(f"⚠️ SECURITY FAILURE: OTP Node Error: {e}")
         return {}
 
-# --- 🔔 INTERNAL DASHBOARD NOTIFICATIONS ---
-# These stay synchronous because db.commit() is fast local logic
+# --- 🔔 3. INTERNAL GRID NOTIFICATIONS ---
 
 def create_grid_notification(user_id, title, message, category='info'):
-    """Persists a notification to the database for the user dashboard."""
-    from app.models import Notification # Local import to avoid circular dependency
+    """
+    Persists an internal UI notification.
+    Synchronous because DB commit is localized and fast.
+    """
+    from app.models import Notification
     note = Notification(
         user_id=user_id,
         title=title,
@@ -86,33 +112,41 @@ def create_grid_notification(user_id, title, message, category='info'):
     db.session.add(note)
     db.session.commit()
 
-# --- 📲 TRANSACTIONAL LOGIC ---
+# --- 📲 4. TRANSACTIONAL PULSE (Build #5) ---
 
-def sync_escrow_notifications(order):
+def sync_handshake_pulse(order):
     """
-    Buyer/Seller Dashboard + Async SMS alerts.
+    Build #5: The Pulse.
+    Multi-channel synchronization for Escrow events.
     """
-    # Dashboard (Instant)
-    create_grid_notification(order.listing.seller.id, "New Order", f"Funds locked for '{order.listing.title}'.", "success")
-    create_grid_notification(order.buyer_id, "Escrow Secured", f"Funds secured for '{order.listing.title}'.", "info")
+    from app.models import User
+    seller = User.query.get(order.listing.user_id)
+    buyer = User.query.get(order.buyer_id)
 
-    # SMS (Offloaded to Worker)
-    seller_sms = f"💰 FlipTrybe: Item Sold! Funds locked for '{order.listing.title}'. Prepare for dispatch."
-    buyer_sms = f"🛡️ FlipTrybe Escrow: Funds secured for '{order.listing.title}'. Seller notified."
+    # 1. Internal Grid Alerts
+    create_grid_notification(seller.id, "Asset Secured", f"Funds for '{order.listing.title}' are locked in Vault.", "success")
+    create_grid_notification(buyer.id, "Vault Active", f"Liquidity for '{order.listing.title}' is now in Escrow.", "info")
+
+    # 2. External SMS Signals
+    seller_msg = f"💰 FlipTrybe: Sold! ₦{order.total_price:,.0f} locked for '{order.listing.title}'. Prepare dispatch."
+    buyer_msg = f"🛡️ FlipTrybe: Handshake Secured! Funds for '{order.listing.title}' are in the Vault."
     
-    transmit_termii_signal.delay(order.listing.seller.phone, seller_sms)
-    transmit_termii_signal.delay(order.buyer.phone, buyer_sms)
+    transmit_termii_signal.delay(seller.phone, seller_msg)
+    transmit_termii_signal.delay(buyer.phone, buyer_msg)
 
 def notify_pilot_assignment(order):
-    if order.driver_id:
-        msg = f"New Mission: Pickup '{order.listing.title}' at {order.listing.state}."
-        create_grid_notification(order.driver_id, "Mission Assigned", msg, "warning")
-        transmit_termii_signal.delay(order.driver.phone, f"🚁 FlipTrybe Logistics:\n{msg}")
+    """Logistics Sync: Alerts the Pilot of a mission."""
+    from app.models import User
+    pilot = User.query.get(order.driver_id)
+    if pilot:
+        msg = f"Mission: Pickup '{order.listing.title}' in {order.listing.state}."
+        create_grid_notification(pilot.id, "Mission Assigned", msg, "warning")
+        transmit_termii_signal.delay(pilot.phone, f"🚁 FlipTrybe Logistics: {msg}")
 
-# --- 💳 FINANCIAL GATEWAY ---
+# --- 💳 5. FINANCIAL GATEWAY ---
 
-def initialize_paystack_payment(email, amount, reference):
-    """Handles Paystack initialization."""
+def initialize_paystack_bridge(email, amount, reference):
+    """Paystack liquidity bridge for wallet funding."""
     url = "https://api.paystack.co/transaction/initialize"
     headers = {
         "Authorization": f"Bearer {os.environ.get('PAYSTACK_SECRET_KEY')}",
@@ -120,7 +154,7 @@ def initialize_paystack_payment(email, amount, reference):
     }
     data = {
         "email": email,
-        "amount": int(amount * 100),
+        "amount": int(amount * 100), # Naira to Kobo
         "reference": reference,
         "callback_url": os.environ.get('PAYSTACK_CALLBACK_URL')
     }
@@ -128,4 +162,4 @@ def initialize_paystack_payment(email, amount, reference):
         response = requests.post(url, json=data, headers=headers, timeout=15)
         return response.json()
     except Exception as e:
-        return {"status": False, "message": str(e)}
+        return {"status": False, "message": f"Gateway Node Error: {str(e)}"}
