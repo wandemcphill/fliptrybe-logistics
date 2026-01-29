@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center bg-red-50/30 px-6 py-12">
+    <div class="max-w-xl w-full">
+        
+        <div class="text-center mb-10">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h1 class="text-3xl font-black uppercase italic tracking-tighter mb-2">Raise <span class="text-red-500">Dispute</span></h1>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Ref: #{{ order.handshake_id }} • {{ order.listing.title }}
+            </p>
+        </div>
+
+        <div class="bg-white p-10 rounded-[40px] shadow-xl shadow-red-100 border border-red-50">
+            <form method="POST" action="" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+
+                <div class="mb-6">
+                    <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Primary Issue</label>
+                    {{ form.reason(class="w-full p-4 bg-gray-50 rounded-xl border border-gray-100 focus:border-red-500 focus:outline-none text-xs font-bold") }}
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Incident Report</label>
+                    {{ form.description(class="w-full p-4 bg-gray-50 rounded-xl border border-gray-100 focus:border-red-500 focus:outline-none text-sm font-medium h-32 resize-none", placeholder="Please describe exactly what went wrong...") }}
+                    {% if form.description.errors %}
+                        <div class="text-red-500 text-[9px] font-bold uppercase mt-2">{{ form.description.errors[0] }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Visual Evidence (Optional)</label>
+                    {{ form.evidence(class="block w-full text-[10px] text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-red-50 file:text-red-600 hover:file:bg-red-100") }}
+                </div>
+
+                <button type="submit" class="w-full h-16 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.25em] hover:bg-red-700 hover:shadow-lg hover:shadow-red-200 transition-all">
+                    Freeze Funds & Alert Admin
+                </button>
+                
+                <p class="text-center text-[8px] font-bold text-gray-400 uppercase mt-4">
+                    <i class="fas fa-lock mr-1"></i> Funds will be held in escrow until resolution.
+                </p>
+
+            </form>
+        </div>
+        
+        <div class="text-center mt-8">
+            <a href="{{ url_for('main.dashboard') }}" class="text-[9px] font-bold uppercase text-gray-400 hover:text-black transition-colors">Cancel Protocol</a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

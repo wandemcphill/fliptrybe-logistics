@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center bg-[#F5F5F7] px-6 py-12">
+    <div class="max-w-[480px] w-full">
+        
+        <a href="{{ url_for('main.dashboard') }}" class="group inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-black mb-8 transition-colors">
+            <i class="fas fa-arrow-left text-[8px]"></i> <span>Abort Sequence</span>
+        </a>
+
+        <div class="bg-white p-8 md:p-12 rounded-[32px] shadow-xl border border-gray-100 relative overflow-hidden">
+            
+            <div class="mb-10 text-center">
+                <p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-[0.25em] mb-3">Available Liquidity</p>
+                <h1 class="text-5xl font-black tracking-tighter text-gray-900 leading-none">
+                    <span class="text-2xl align-top opacity-30 mr-1">₦</span>{{ "{:,.2f}".format(current_user.wallet_balance) }}
+                </h1>
+            </div>
+
+            <form method="POST" action="">
+                {{ form.hidden_tag() }}
+
+                <div class="mb-6">
+                    <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Withdrawal Amount</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">₦</span>
+                        {{ form.amount(class="w-full pl-10 pr-4 py-4 bg-gray-50 rounded-xl border border-gray-100 focus:border-black focus:outline-none font-black text-lg", placeholder="0.00") }}
+                    </div>
+                </div>
+
+                <div class="space-y-4 mb-8">
+                    <div>
+                        <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Bank Name</label>
+                        {{ form.bank_name(class="w-full p-4 bg-gray-50 rounded-xl border border-gray-100 focus:border-black focus:outline-none text-xs font-bold") }}
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Account Number</label>
+                            {{ form.account_number(class="w-full p-4 bg-gray-50 rounded-xl border border-gray-100 focus:border-black focus:outline-none text-xs font-bold font-mono") }}
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Account Name</label>
+                            {{ form.account_name(class="w-full p-4 bg-gray-50 rounded-xl border border-gray-100 focus:border-black focus:outline-none text-xs font-bold") }}
+                        </div>
+                    </div>
+                </div>
+
+                {{ form.submit(class="w-full bg-black text-white h-16 rounded-2xl text-[10px] font-black uppercase tracking-[0.25em] hover:bg-gray-800 transition-all cursor-pointer shadow-lg") }}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

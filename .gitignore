@@ -1,38 +1,37 @@
-# --- Virtual Environments ---
+# --- Python & Virtual Env ---
+__pycache__/
+*.py[cod]
 venv/
 env/
-ENV/
 .env
 
-# --- Flask & Database ---
-instance/
+# --- Database ---
 *.db
-*.sqlite
-.webassets-cache
+*.sqlite3
+fliptrybe.db
+fliptrybe_v6.db
+instance/
 
-# --- Python System Files ---
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-.pytest_cache/
-
-# --- Media & Assets (CRITICAL) ---
-# We ignore the contents of uploads, but keep the folder
-app/static/uploads/*
-!app/static/uploads/.gitkeep
-
-# --- OS Specific ---
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# --- IDEs ---
+# --- IDE Settings ---
 .vscode/
 .idea/
-*.swp
+.DS_Store
+
+# --- Static Assets (Keep folders, ignore files) ---
+# This ensures your 'avatars' and 'products' folders exist on GitHub
+# but doesn't upload your personal test photos.
+app/static/avatars/*
+!app/static/avatars/default.jpg
+!app/static/avatars/.gitkeep
+
+app/static/products/*
+!app/static/products/.gitkeep
+
+app/static/kyc_docs/*
+!app/static/kyc_docs/.gitkeep
+
+app/static/disputes/*
+!app/static/disputes/.gitkeep
+
+app/static/deliveries/*
+!app/static/deliveries/.gitkeep

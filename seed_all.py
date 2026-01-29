@@ -1,92 +1,227 @@
-from app import create_app, db
-from app.models import User, Listing, Order
-from datetime import datetime
-import os
+from app import create_app, db, bcrypt
+from app.models import (
+    User, Listing, Order, Transaction, Dispute, 
+    Withdrawal, Notification, PriceHistory, Favorite
+)
+from datetime import datetime, timedelta
+import random
 
+# Initialize the App Context
 app = create_app()
 
-def run_genesis():
+def seed_database():
     with app.app_context():
-        print("🧹 SCRUBBING GRID (PURGING OLD DATA)...")
+        print("🛑 Wiping Grid Data...")
         db.drop_all()
+        print("🏗️  Rebuilding Database Architecture...")
         db.create_all()
 
-        print("👤 CREATING MASTER IDENTITIES...")
-        
-        # 1. HQ COMMAND (Admin)
+        print("👥 Seeding Identity Nodes (Users)...")
+        # 1. THE OVERSEER (Admin)
         admin = User(
-            name="FlipTrybe HQ", 
-            username="overseer", 
-            email="admin@fliptrybe.com", 
-            role="admin", 
-            is_admin=True, 
-            is_verified=True
+            name="FlipTrybe HQ",
+            email="admin@fliptrybe.com",
+            phone="2348000000000",
+            password_hash=bcrypt.generate_password_hash("trybe_hq_2026").decode('utf-8'),
+            is_admin=True,
+            is_verified=True,
+            wallet_balance=1000000.00
         )
-        admin.set_password("admin123")
-        db.session.add(admin)
 
-        # 2. PILOT ALPHA (Logistics Expert)
+        # 2. THE MERCHANT (Seller)
+        merchant = User(
+            name="Emeka Ventures",
+            email="merchant@test.com",
+            phone="2348011111111",
+            password_hash=bcrypt.generate_password_hash("password").decode('utf-8'),
+            is_verified=True,
+            wallet_balance=45000.00
+        )
+
+        # 3. THE PILOT (Logistics)
         pilot = User(
-            name="Musa Logistics", 
-            username="pilot_musa", 
-            email="driver@fliptrybe.com", 
-            role="driver", 
-            is_driver=True, 
+            name="Musa Logistics",
+            email="pilot@test.com",
+            phone="2348022222222",
+            password_hash=bcrypt.generate_password_hash("password").decode('utf-8'),
+            is_driver=True,
             is_verified=True,
-            state="Lagos", 
-            city="Ikeja",
-            vehicle_type="Toyota Hiace Van", 
-            license_plate="FT-LOG-01L"
+            wallet_balance=5000.00
         )
-        pilot.set_password("driver123")
-        db.session.add(pilot)
 
-        # 3. MERCHANT NODE (Liquidity/Buyer)
+        # 4. THE BUYER (Consumer)
         buyer = User(
-            name="Lekan Merchant", 
-            username="lekan_m", 
-            email="buyer@fliptrybe.com", 
-            role="user", 
-            wallet_balance=2500000.0, 
+            name="Tola Customer",
+            email="buyer@test.com",
+            phone="2348033333333",
+            password_hash=bcrypt.generate_password_hash("password").decode('utf-8'),
             is_verified=True,
-            state="Lagos",
-            city="Lekki"
+            wallet_balance=250000.00
         )
-        buyer.set_password("buyer123")
-        db.session.add(buyer)
 
-        db.session.commit() # Lock in identities to get IDs
-        print(f"✅ Master Identities Locked: Admin, Pilot, Merchant")
-
-        print("📦 STOCKING THE MARKET...")
-        
-        # Assets belonging to the Merchant
-        assets = [
-            Listing(
-                title="MacBook Pro M3 Max (16-inch)", 
-                description="64GB RAM, 2TB SSD. Silicon Valley Grade. Pristine condition.", 
-                price=1850000.0, section="declutter", category="Electronics", 
-                condition="Brand New", state="Lagos", city="Ikeja", user_id=buyer.id
-            ),
-            Listing(
-                title="Lekki Phase 1 Luxury Shortlet", 
-                description="2-Bedroom fully serviced apartment. 24/7 Power & Security.", 
-                price=120000.0, section="shortlet", category="Real Estate", 
-                condition="Refurbished", state="Lagos", city="Lekki", user_id=buyer.id
-            ),
-            Listing(
-                title="Rolex Submariner (Date)", 
-                description="2024 Card. Box and Papers included. Investment grade.", 
-                price=14500000.0, section="declutter", category="Watches", 
-                condition="Brand New", state="Lagos", city="Victoria Island", user_id=buyer.id
-            )
-        ]
-        
-        for asset in assets:
-            db.session.add(asset)
-        
+        db.session.add_all([admin, merchant, pilot, buyer])
         db.session.commit()
-        print(f"🚀 GENESIS COMPLETE. 3 Nodes & {len(assets)} Market Assets Live.")
+
+        print("📦 Seeding Asset Manifest (Listings)...")
+        # Merchant Assets
+        l1 = Listing(
+            title="iPhone 15 Pro Max",
+            description="UK Used, 256GB, Battery Health 95%. Clean condition.",
+            price=850000.00,
+            category="Electronics",
+            section="market",
+            state="Lagos",
+            image_filename="default.jpg",
+            seller=merchant,
+            status="Available"
+        )
+
+        l2 = Listing(
+            title="Lekki 2-Bed Shortlet",
+            description="Luxury apartment with 24/7 power and swimming pool.",
+            price=150000.00,
+            category="Real Estate",
+            section="shortlet",
+            state="Lagos",
+            image_filename="default.jpg",
+            seller=merchant,
+            status="Available"
+        )
+
+        l3 = Listing(
+            title="Toyota Camry 2018",
+            description="Direct Belgium. Low mileage. Buy and drive.",
+            price=4500000.00,
+            category="Vehicles",
+            section="market",
+            state="Abuja",
+            image_filename="default.jpg",
+            seller=merchant,
+            status="Available"
+        )
+        
+        l4 = Listing(
+            title="Vintage Denim Jacket",
+            description="Size XL. Barely used. Decluttering my wardrobe.",
+            price=15000.00,
+            category="Fashion",
+            section="declutter",
+            state="Rivers",
+            image_filename="default.jpg",
+            seller=buyer, # Buyer listing an item (Declutter mode)
+            status="Available"
+        )
+
+        db.session.add_all([l1, l2, l3, l4])
+        db.session.commit()
+        
+        # Add Price History
+        for item in [l1, l2, l3, l4]:
+            ph = PriceHistory(listing_id=item.id, price=item.price)
+            db.session.add(ph)
+        db.session.commit()
+
+        print("🤝 Seeding Handshake Protocols (Orders)...")
+        # 1. An Active Escrow Order (Buyer buys iPhone)
+        # We assume Buyer bought a PREVIOUS iPhone that is now 'Sold'
+        sold_item = Listing(
+            title="MacBook Pro M1",
+            description="Sold item example.",
+            price=600000.00,
+            category="Electronics",
+            section="market",
+            state="Lagos",
+            image_filename="default.jpg",
+            seller=merchant,
+            status="Sold"
+        )
+        db.session.add(sold_item)
+        db.session.commit()
+
+        order1 = Order(
+            total_price=sold_item.price,
+            status="Escrowed",
+            delivery_status="In Transit",
+            buyer=buyer,
+            listing=sold_item,
+            driver=pilot # Assigned to Musa
+        )
+        
+        # 2. A Completed Order (History)
+        completed_item = Listing(
+            title="PS5 Console",
+            description="Sold item example.",
+            price=450000.00,
+            category="Electronics",
+            section="market",
+            state="Lagos",
+            image_filename="default.jpg",
+            seller=merchant,
+            status="Sold"
+        )
+        db.session.add(completed_item)
+        db.session.commit()
+
+        order2 = Order(
+            total_price=completed_item.price,
+            status="Released",
+            delivery_status="Completed",
+            buyer=buyer,
+            listing=completed_item,
+            driver=pilot
+        )
+
+        db.session.add_all([order1, order2])
+        db.session.commit()
+
+        print("💸 Seeding Financial Audit Trail...")
+        # Transaction History for Buyer
+        t1 = Transaction(amount=500000.00, type="Credit", reference="TOP-INIT-001", user=buyer)
+        t2 = Transaction(amount=600000.00, type="Debit", reference="PURCHASE-HS-001", user=buyer)
+        
+        # Withdrawal Request for Merchant
+        w1 = Withdrawal(
+            amount=50000.00,
+            bank_name="GTBank",
+            account_number="0123456789",
+            account_name="Emeka Ventures",
+            status="Pending",
+            user=merchant
+        )
+        
+        db.session.add_all([t1, t2, w1])
+        db.session.commit()
+
+        print("🔔 Seeding Notification Signals...")
+        n1 = Notification(
+            user_id=buyer.id,
+            title="Welcome to Grid 2026",
+            message="Your node identity has been verified. Welcome to the future of commerce.",
+            category="success"
+        )
+        n2 = Notification(
+            user_id=merchant.id,
+            title="Inventory Alert",
+            message="Your 'MacBook Pro M1' has been secured in Escrow. Pilot Assigned.",
+            category="info"
+        )
+        n3 = Notification(
+            user_id=pilot.id,
+            title="Mission Assigned",
+            message="New logistics mission: Pickup at Ikeja. Deliver to Lekki.",
+            category="warning"
+        )
+        
+        db.session.add_all([n1, n2, n3])
+        db.session.commit()
+
+        print("✅ GRID INITIALIZATION COMPLETE.")
+        print("------------------------------------------------")
+        print(f"🔑 Admin Login:    admin@fliptrybe.com / trybe_hq_2026")
+        print(f"🔑 Merchant Login: merchant@test.com / password")
+        print(f"🔑 Pilot Login:    pilot@test.com    / password")
+        print(f"🔑 Buyer Login:    buyer@test.com    / password")
+        print("------------------------------------------------")
 
 if __name__ == '__main__':
-    run_genesis()
+    seed_database()

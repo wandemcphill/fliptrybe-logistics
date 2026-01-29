@@ -1,134 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>FlipTrybe Handshake Invoice // {{ order.handshake_id }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        /* 🛰️ PROTOCOL REPAIR: PRINT COLOR & SHADOWS */
-        body { 
-            font-family: 'Urbanist', sans-serif; 
-            -webkit-print-color-adjust: exact; 
-            print-color-adjust: exact; 
-        }
+{% extends "base.html" %}
 
-        .invoice-card {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Corrected property */
-        }
-
-        @media print {
-            .no-print { display: none; }
-            body { background: white; padding: 0; }
-            .invoice-card { 
-                border: none; 
-                box-shadow: none !important; /* Fixed: 'shadow' to 'box-shadow' */
-            }
-        }
-    </style>
-</head>
-<body class="bg-gray-100 p-10">
-
-    <div class="no-print max-w-3xl mx-auto mb-8 flex justify-between items-center">
-        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Handshake Transmission Receipt</p>
-        <button onclick="window.print()" class="bg-black text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl">
-            Download PDF Signal
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-12 px-6 print:bg-white print:p-0">
+    
+    <div class="max-w-3xl mx-auto mb-8 flex justify-between items-center print:hidden">
+        <a href="{{ url_for('main.dashboard') }}" class="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+            <i class="fas fa-arrow-left mr-1"></i> Return to Dashboard
+        </a>
+        <button onclick="window.print()" class="bg-black text-white px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg flex items-center gap-2">
+            <i class="fas fa-print"></i> Print / Save PDF
         </button>
     </div>
 
-    <div class="invoice-card max-w-3xl mx-auto bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-gray-100">
+    <div class="max-w-3xl mx-auto bg-white p-12 rounded-[40px] shadow-sm border border-gray-100 print:shadow-none print:border-none print:rounded-none print:w-full print:max-w-none">
         
-        <div class="bg-zinc-900 p-16 text-white flex justify-between items-end relative overflow-hidden">
-            <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
-            <div class="relative z-10">
-                <h1 class="text-4xl font-black tracking-tighter mb-2 italic">FlipTrybe.</h1>
-                <p class="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.4em]">Zero-Trust Commerce Layer</p>
+        <div class="flex justify-between items-start mb-12 border-b-2 border-black pb-8">
+            <div>
+                <h1 class="text-4xl font-black uppercase italic tracking-tighter mb-2">FlipTrybe <span class="text-blue-600">Grid</span></h1>
+                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                    Official Transaction Receipt
+                </p>
             </div>
-            <div class="text-right relative z-10">
-                <h2 class="text-xl font-black uppercase tracking-widest text-indigo-400">Tax Invoice</h2>
-                <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">No: {{ order.handshake_id }}</p>
+            <div class="text-right">
+                <p class="text-[10px] font-black uppercase text-gray-900 mb-1">Invoice #{{ order.id|string|zfill(6) }}</p>
+                <p class="text-[10px] font-bold uppercase text-gray-400">Date: {{ order.timestamp.strftime('%d %b, %Y') }}</p>
+                <p class="text-[10px] font-bold uppercase text-gray-400">Ref: {{ order.handshake_id }}</p>
             </div>
         </div>
 
-        <div class="p-16">
-            <div class="grid grid-cols-2 gap-12 mb-20">
-                <div>
-                    <h4 class="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-4">Origin Node (Seller)</h4>
-                    <p class="text-sm font-black text-gray-900">{{ order.listing.seller.name }}</p>
-                    <p class="text-xs font-medium text-gray-500 mt-1 leading-relaxed">
-                        {{ order.listing.city }}, {{ order.listing.state }} Hub<br>
-                        {{ order.listing.seller.phone }}
-                    </p>
-                </div>
-                <div class="text-right">
-                    <h4 class="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-4">Destination Node (Buyer)</h4>
-                    <p class="text-sm font-black text-gray-900">{{ order.buyer.name }}</p>
-                    <p class="text-xs font-medium text-gray-500 mt-1 leading-relaxed">
-                        {{ order.buyer.address or 'Digital Delivery Point' }}<br>
-                        {{ order.buyer.email }}
-                    </p>
-                </div>
+        <div class="grid grid-cols-2 gap-12 mb-12">
+            <div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-100 pb-2">Merchant Node</p>
+                <h4 class="text-sm font-black uppercase text-gray-900">{{ order.listing.author.name }}</h4>
+                <p class="text-[10px] text-gray-500 uppercase">{{ order.listing.author.email }}</p>
+                <p class="text-[10px] text-gray-500 uppercase mt-1">{{ order.listing.state }}</p>
             </div>
 
-            <table class="w-full mb-20">
+            <div class="text-right">
+                <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-100 pb-2">Billed To</p>
+                <h4 class="text-sm font-black uppercase text-gray-900">{{ order.buyer.name }}</h4>
+                <p class="text-[10px] text-gray-500 uppercase">{{ order.buyer.email }}</p>
+                <p class="text-[10px] text-gray-500 uppercase mt-1">FlipTrybe Verified ID</p>
+            </div>
+        </div>
+
+        <div class="mb-12">
+            <table class="w-full text-left">
                 <thead>
-                    <tr class="border-b-2 border-gray-100">
-                        <th class="text-left pb-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Asset Signal Description</th>
-                        <th class="text-right pb-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Valuation</th>
+                    <tr class="border-b border-gray-200">
+                        <th class="pb-4 text-[9px] font-black text-gray-400 uppercase tracking-widest w-1/2">Asset Description</th>
+                        <th class="pb-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Qty</th>
+                        <th class="pb-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Unit Price</th>
+                        <th class="pb-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Total</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr class="border-b border-gray-50">
-                        <td class="py-8">
-                            <p class="text-sm font-black text-gray-900">{{ order.listing.title }}</p>
-                            <p class="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Protocol: {{ order.listing.section }}</p>
+                <tbody class="divide-y divide-gray-50">
+                    <tr>
+                        <td class="py-6">
+                            <p class="text-xs font-black uppercase text-gray-900">{{ order.listing.title }}</p>
+                            <p class="text-[9px] text-gray-400 uppercase mt-1">Category: {{ order.listing.category }}</p>
                         </td>
-                        <td class="py-8 text-right font-black text-gray-900">
-                            ₦{{ "{:,.2f}".format(order.subtotal) }}
+                        <td class="py-6 text-center text-xs font-bold text-gray-900">1</td>
+                        <td class="py-6 text-right text-xs font-bold text-gray-900">₦{{ "{:,.2f}".format(order.listing.price) }}</td>
+                        <td class="py-6 text-right text-xs font-bold text-gray-900">₦{{ "{:,.2f}".format(order.listing.price) }}</td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="py-4">
+                            <p class="text-[10px] font-bold uppercase text-gray-500">Escrow Protection Fee</p>
                         </td>
+                        <td class="py-4 text-center text-[10px] font-bold text-gray-500">1</td>
+                        <td class="py-4 text-right text-[10px] font-bold text-gray-500">₦0.00</td>
+                        <td class="py-4 text-right text-[10px] font-bold text-gray-500">₦0.00</td>
                     </tr>
                 </tbody>
             </table>
+        </div>
 
-            <div class="flex justify-end">
-                <div class="w-full max-w-xs space-y-4">
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Net Subtotal</span>
-                        <span class="font-bold">₦{{ "{:,.2f}".format(order.subtotal) }}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-[10px] font-black uppercase text-gray-400 tracking-widest">VAT (7.5%)</span>
-                        <span class="font-bold">₦{{ "{:,.2f}".format(order.tax_amount) }}</span>
-                    </div>
-                    <div class="pt-6 border-t border-gray-100 flex justify-between items-center">
-                        <span class="text-xs font-black uppercase text-indigo-600 tracking-widest">Total Liquidity</span>
-                        <span class="text-2xl font-black text-gray-900 tracking-tighter">₦{{ "{:,.2f}".format(order.total_price) }}</span>
-                    </div>
+        <div class="flex justify-end mb-16">
+            <div class="w-1/2 bg-gray-50 p-6 rounded-2xl print:bg-transparent print:border print:border-gray-200">
+                <div class="flex justify-between mb-2">
+                    <span class="text-[10px] font-bold text-gray-500 uppercase">Subtotal</span>
+                    <span class="text-[10px] font-bold text-gray-900">₦{{ "{:,.2f}".format(order.listing.price) }}</span>
                 </div>
-            </div>
-
-            <div class="mt-32 pt-10 border-t border-gray-50 flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-200 text-xs rotate-12">
-                        SEAL
-                    </div>
-                    <p class="text-[8px] font-black uppercase text-gray-300 tracking-[0.3em] max-w-[150px] leading-relaxed">
-                        Funds released via PIN authentication at node {{ order.order_date.strftime('%H:%M:%S') }}
-                    </p>
+                <div class="flex justify-between mb-4 pb-4 border-b border-gray-200">
+                    <span class="text-[10px] font-bold text-gray-500 uppercase">Service Fee</span>
+                    <span class="text-[10px] font-bold text-gray-900">₦0.00</span>
                 </div>
-                <div class="text-right">
-                    <p class="text-[9px] font-black text-gray-900 uppercase tracking-widest">Handshake Verified</p>
-                    <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">Status: {{ order.delivery_status }}</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-black text-gray-900 uppercase">Total Paid</span>
+                    <span class="text-xl font-black text-black">₦{{ "{:,.2f}".format(order.total_price) }}</span>
                 </div>
             </div>
         </div>
 
-        <div class="bg-gray-50 p-8 text-center border-t border-gray-100">
-            <p class="text-[8px] font-black text-gray-400 uppercase tracking-[0.5em]">
-                Verified by FlipTrybe Escrow Network • Lagos, Nigeria
-            </p>
+        <div class="border-t-2 border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-end gap-6">
+            <div>
+                <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-2">Terms & Conditions</p>
+                <p class="text-[9px] text-gray-500 max-w-xs leading-relaxed">
+                    This receipt confirms that funds have been secured in the FlipTrybe Escrow Vault. Payout to merchant is conditional upon successful delivery and buyer confirmation.
+                </p>
+            </div>
+            <div class="text-right">
+                <div class="w-24 ml-auto mb-2 opacity-50">
+                    <div class="border-b border-black h-8"></div>
+                </div>
+                <p class="text-[8px] font-black uppercase text-gray-900 tracking-widest">Authorized System Stamp</p>
+            </div>
         </div>
+
     </div>
+</div>
 
-</body>
-</html>
+<style>
+    @media print {
+        @page { margin: 0; }
+        body { background: white; margin: 0; }
+        nav, footer, .print\:hidden { display: none !important; }
+        .print\:shadow-none { box-shadow: none !important; }
+        .print\:border-none { border: none !important; }
+        .print\:bg-white { background: white !important; }
+        .print\:p-0 { padding: 0 !important; }
+    }
+</style>
+{% endblock %}

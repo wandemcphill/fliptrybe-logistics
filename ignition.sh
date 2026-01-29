@@ -1,21 +1,33 @@
 #!/bin/bash
 
-echo "🛰️ FLIPTRYBE 2026: INITIALIZING SOVEREIGN DEPLOYMENT..."
+echo "------------------------------------------------"
+echo "🚀 FLIPTRYBE 2026: IGNITION SEQUENCE"
+echo "------------------------------------------------"
 
-# 1. Construct Physical Asset Nodes
-echo "📂 Constructing static signal hubs..."
-mkdir -p app/static/uploads/kyc
-mkdir -p app/static/uploads/product
-mkdir -p app/static/uploads/disputes
-
-# 2. Database Synchronization
-echo "🗄️ Synchronizing fliptrybe_v6.db..."
-if [ ! -d "migrations" ]; then
-    flask db init
+# 1. Check for Virtual Environment
+if [ -d "venv" ]; then
+    echo "✅ Virtual Environment found. Activating..."
+    source venv/bin/activate
+else
+    echo "⚙️  Creating new Virtual Environment..."
+    python3 -m venv venv
+    source venv/bin/activate
 fi
 
-flask db migrate -m "Ignition: Sovereign Core v6"
-flask db upgrade
+# 2. Install Dependencies
+echo "📦 Synchronizing Dependencies..."
+pip install -r requirements.txt
 
-# 3. Final Pulse
-echo "🏁 DEPLOYMENT INITIALIZED. RUN 'python run.py' TO IGNITE."
+# 3. Check for Database
+if [ ! -f "app/site.db" ]; then
+    echo "⚠️  Database missing. Running Seed Script..."
+    python seed_all.py
+else
+    echo "✅ Database found. Skipping seed."
+fi
+
+# 4. Launch Server
+echo "------------------------------------------------"
+echo "📡 STARTING DEVELOPMENT SERVER (Port 5000)"
+echo "------------------------------------------------"
+python run.py

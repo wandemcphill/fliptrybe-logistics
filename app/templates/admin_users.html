@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-12">
+    
+    <a href="{{ url_for('main.admin') }}" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black mb-8 transition-colors">
+        <i class="fas fa-arrow-left"></i> Return to Overseer
+    </a>
+
+    <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500">Database Access</span>
+            </div>
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter">Node <span class="text-gray-400">Registry</span></h1>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">
+                Manage User Identities, Permissions & Sanctions
+            </p>
+        </div>
+
+        <form class="w-full md:w-auto flex gap-2">
+            <div class="relative group w-full md:w-80">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors"></i>
+                <input type="text" name="q" placeholder="Search by Name, Email or Node ID..." 
+                       class="w-full pl-12 pr-6 py-4 rounded-2xl bg-white border border-gray-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-black transition-all shadow-sm">
+            </div>
+            <button type="submit" class="bg-black text-white px-6 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all">
+                Search
+            </button>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        <div class="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
+            <p class="text-[9px] font-black uppercase text-gray-400 mb-1">Total Nodes</p>
+            <h3 class="text-2xl font-black text-gray-900">{{ users|length if users else 0 }}</h3>
+        </div>
+        <div class="bg-emerald-50 p-6 rounded-[24px] border border-emerald-100">
+            <p class="text-[9px] font-black uppercase text-emerald-400 mb-1">Verified</p>
+            <h3 class="text-2xl font-black text-emerald-800">
+                {{ users | selectattr('is_verified') | list | length if users else 0 }}
+            </h3>
+        </div>
+        <div class="bg-blue-50 p-6 rounded-[24px] border border-blue-100">
+            <p class="text-[9px] font-black uppercase text-blue-400 mb-1">Drivers</p>
+            <h3 class="text-2xl font-black text-blue-800">
+                {{ users | selectattr('is_driver') | list | length if users else 0 }}
+            </h3>
+        </div>
+        <div class="bg-red-50 p-6 rounded-[24px] border border-red-100">
+            <p class="text-[9px] font-black uppercase text-red-400 mb-1">Flagged / Banned</p>
+            <h3 class="text-2xl font-black text-red-800">0</h3> </div>
+    </div>
+
+    <div class="bg-white border border-gray-100 rounded-[40px] shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-8 py-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Identity Node</th>
+                        <th class="px-8 py-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Role & Status</th>
+                        <th class="px-8 py-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Wallet Liquidity</th>
+                        <th class="px-8 py-6 text-[9px] font-black uppercase tracking-widest text-gray-400 text-right">Admin Protocols</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% if users %}
+                        {% for user in users %}
+                        <tr class="group hover:bg-gray-50/50 transition-colors">
+                            <td class="px-8 py-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                                        <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="w-full h-full object-cover">
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-black uppercase text-gray-900">{{ user.name }}</h4>
+                                        <p class="text-[10px] text-gray-400 font-mono">{{ user.email }}</p>
+                                        <p class="text-[8px] text-gray-300 font-mono mt-1">ID: {{ user.id }}</p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="px-8 py-6">
+                                <div class="flex flex-col gap-2 items-start">
+                                    {% if user.is_driver %}
+                                        <span class="bg-black text-white px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest">
+                                            Logistics Pilot
+                                        </span>
+                                    {% else %}
+                                        <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest">
+                                            Standard Node
+                                        </span>
+                                    {% endif %}
+
+                                    {% if user.is_verified %}
+                                        <span class="flex items-center gap-1 text-[9px] font-bold text-emerald-600">
+                                            <i class="fas fa-check-circle"></i> KYC Verified
+                                        </span>
+                                    {% else %}
+                                        <span class="flex items-center gap-1 text-[9px] font-bold text-orange-400">
+                                            <i class="fas fa-clock"></i> Pending KYC
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+
+                            <td class="px-8 py-6">
+                                <p class="text-sm font-black text-gray-900">₦{{ "{:,.2f}".format(user.wallet_balance) }}</p>
+                                <p class="text-[9px] text-gray-400 uppercase">Available</p>
+                            </td>
+
+                            <td class="px-8 py-6 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    
+                                    {% if not user.is_verified %}
+                                    <form action="#" method="POST" class="inline">
+                                        <button title="Force Verify" class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center">
+                                            <i class="fas fa-user-check text-xs"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+
+                                    <a href="#" title="Edit Node" class="w-8 h-8 rounded-lg bg-gray-50 text-gray-600 hover:bg-black hover:text-white transition-all flex items-center justify-center">
+                                        <i class="fas fa-pen text-xs"></i>
+                                    </a>
+
+                                    <form action="#" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to ban this user? This will freeze their assets.');">
+                                        <button title="Sanction User" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">
+                                            <i class="fas fa-gavel text-xs"></i>
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="px-8 py-12 text-center">
+                                <i class="fas fa-users-slash text-gray-300 text-3xl mb-4"></i>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No nodes found matching your criteria.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="bg-gray-50 px-8 py-4 border-t border-gray-100 flex justify-between items-center">
+            <p class="text-[9px] font-bold text-gray-400 uppercase">Showing {{ users|length }} Records</p>
+            <div class="flex gap-2">
+                <button class="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-400 hover:text-black hover:border-black transition-all flex items-center justify-center">
+                    <i class="fas fa-chevron-left text-[10px]"></i>
+                </button>
+                <button class="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-400 hover:text-black hover:border-black transition-all flex items-center justify-center">
+                    <i class="fas fa-chevron-right text-[10px]"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

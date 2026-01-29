@@ -1,139 +1,133 @@
 {% extends "base.html" %}
+
 {% block content %}
-
-<div class="bg-gray-50 min-h-screen pb-32 font-sans selection:bg-indigo-100">
+<div class="max-w-7xl mx-auto px-6 py-12">
     
-    <div class="bg-white border-b border-gray-100 sticky top-0 z-[100] backdrop-blur-md no-print">
-        <div class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center">
-            <div class="flex items-center gap-6">
-                <a href="{{ url_for('main.admin_panel') }}" class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-zinc-400 hover:text-black hover:bg-white hover:shadow-xl transition-all group">
-                    <i class="fas fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
-                </a>
-                <div>
-                    <h1 class="text-3xl font-black text-zinc-900 tracking-tighter">Velocity <span class="text-indigo-600">Analytics</span></h1>
-                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mt-1">Weekly Pilot Performance Matrix // {{ timestamp.strftime('%b %d, %Y') }}</p>
-                </div>
-            </div>
-
-            <div class="flex gap-4">
-                <button onclick="window.print()" class="bg-zinc-900 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg">
-                    Export PDF Signal
+    <div class="flex flex-col md:flex-row justify-between items-end mb-12 print:hidden">
+        <div>
+            <a href="/admin" class="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black mb-2 inline-block">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Overseer
+            </a>
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter">System <span class="text-blue-600">Audit Log</span></h1>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">
+                Generated on: {{ current_time | default('Now') }}
+            </p>
+        </div>
+        
+        <div class="flex gap-3">
+            <form class="flex gap-2 bg-white border border-gray-200 p-1 rounded-xl">
+                <input type="date" class="border-none text-[10px] font-bold uppercase text-gray-500 focus:ring-0 bg-transparent">
+                <button type="submit" class="bg-gray-100 text-black px-4 rounded-lg text-[9px] font-black uppercase hover:bg-gray-200">
+                    Filter
                 </button>
-            </div>
+            </form>
+
+            <button onclick="window.print()" class="bg-black text-white px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg">
+                <i class="fas fa-print mr-2"></i> Print Report
+            </button>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-6 mt-12">
+    <div class="bg-white border border-gray-100 p-10 rounded-[40px] shadow-sm print:border-none print:shadow-none print:p-0">
         
-        <div class="grid md:grid-cols-3 gap-8 mb-16">
-            <div class="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
-                <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-4">Total Weekly Handshakes</p>
-                <h3 class="text-4xl font-black text-zinc-900 tracking-tighter">
-                    {{ pilots|sum(attribute='velocity') }}
-                </h3>
-            </div>
-            <div class="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
-                <p class="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-4">Projected Bonus Liquidity</p>
-                <h3 class="text-4xl font-black text-zinc-900 tracking-tighter">₦{{ "{:,.0f}".format(total_bonus) }}</h3>
-            </div>
-            <div class="bg-zinc-900 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
-                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-4">Platform Net Revenue</p>
-                <h3 class="text-4xl font-black text-white tracking-tighter">₦{{ "{:,.0f}".format(tribe_revenue - total_bonus) }}</h3>
-                <i class="fas fa-chart-line absolute -right-4 -bottom-4 text-white/5 text-8xl"></i>
+        <div class="hidden print:block border-b border-black pb-8 mb-8">
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter">FlipTrybe <span class="text-blue-600">Grid Report</span></h1>
+            <div class="flex justify-between mt-4">
+                <p class="text-[10px] font-bold uppercase text-gray-500">CONFIDENTIAL // INTERNAL USE ONLY</p>
+                <p class="text-[10px] font-bold uppercase text-gray-500">Date: {{ current_time | default('Today') }}</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-[3.5rem] border border-gray-100 shadow-sm overflow-hidden">
+        <div class="grid grid-cols-4 gap-6 mb-12 print:gap-4">
+            <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100 print:border-black print:bg-white">
+                <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Period Volume</p>
+                <h3 class="text-2xl font-black text-gray-900">₦{{ "{:,.0f}".format(summary.volume | default(0)) }}</h3>
+            </div>
+            <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100 print:border-black print:bg-white">
+                <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">New Identities</p>
+                <h3 class="text-2xl font-black text-gray-900">+{{ summary.users | default(0) }}</h3>
+            </div>
+            <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100 print:border-black print:bg-white">
+                <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Disputes Raised</p>
+                <h3 class="text-2xl font-black text-red-600">{{ summary.disputes | default(0) }}</h3>
+            </div>
+            <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100 print:border-black print:bg-white">
+                <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">System Health</p>
+                <h3 class="text-2xl font-black text-emerald-600">99.9%</h3>
+            </div>
+        </div>
+
+        <div class="overflow-hidden">
             <table class="w-full text-left">
                 <thead>
-                    <tr class="bg-gray-50 border-b border-gray-100">
-                        <th class="px-10 py-8 text-[10px] font-black uppercase tracking-widest text-zinc-400">Logistics Node</th>
-                        <th class="px-10 py-8 text-[10px] font-black uppercase tracking-widest text-zinc-400 text-center">Velocity (Weekly)</th>
-                        <th class="px-10 py-8 text-[10px] font-black uppercase tracking-widest text-zinc-400 text-center">Cycle Status</th>
-                        <th class="px-10 py-8 text-[10px] font-black uppercase tracking-widest text-zinc-400 text-right">Pending Bonus</th>
+                    <tr class="border-b-2 border-black">
+                        <th class="pb-4 text-[9px] font-black text-black uppercase tracking-widest w-32">Timestamp</th>
+                        <th class="pb-4 text-[9px] font-black text-black uppercase tracking-widest w-32">Ref ID</th>
+                        <th class="pb-4 text-[9px] font-black text-black uppercase tracking-widest w-48">Actor</th>
+                        <th class="pb-4 text-[9px] font-black text-black uppercase tracking-widest">Action / Event</th>
+                        <th class="pb-4 text-[9px] font-black text-black uppercase tracking-widest text-right">Value / Status</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50">
-                    {% for pilot in pilots %}
-                    <tr class="hover:bg-gray-50/50 transition-colors group">
-                        <td class="px-10 py-8">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-white font-black text-xs">
-                                    {{ pilot.name[0] }}
-                                </div>
-                                <div>
-                                    <p class="text-sm font-black text-zinc-900">{{ pilot.name }}</p>
-                                    <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">ID: FT-PILOT-{{ pilot.id }}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-10 py-8 text-center">
-                            <div class="flex flex-col items-center gap-2">
-                                <span class="text-lg font-black text-zinc-900">{{ pilot.velocity }}</span>
-                                
-                                <div class="w-24 h-1 bg-gray-100 rounded-full overflow-hidden">
-                                    <div class="admin-progress-bar h-full bg-indigo-500 transition-all duration-1000" 
-                                         style="width: 0%"
-                                         data-value="{{ (pilot.velocity % 10) * 10 }}"></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-10 py-8 text-center">
-                            {% if pilot.velocity >= 10 %}
-                            <span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl text-[8px] font-black uppercase tracking-widest border border-emerald-100">
-                                Bonus Latch Active
-                            </span>
-                            {% else %}
-                            <span class="px-4 py-1.5 bg-gray-100 text-gray-400 rounded-xl text-[8px] font-black uppercase tracking-widest">
-                                Cycle Incomplete
-                            </span>
-                            {% endif %}
-                        </td>
-                        <td class="px-10 py-8 text-right">
-                            <p class="text-lg font-black text-zinc-900">₦{{ "{:,.0f}".format(pilot.bonus_due) }}</p>
-                            <p class="text-[8px] font-black text-zinc-400 uppercase tracking-widest mt-1">Ready for Settle</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                <tbody class="divide-y divide-gray-100 print:divide-gray-200">
+                    {% if logs %}
+                        {% for log in logs %}
+                        <tr class="group">
+                            <td class="py-4 text-[10px] font-bold text-gray-500 font-mono">
+                                {{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                            
+                            <td class="py-4 text-[10px] font-bold text-gray-400 font-mono group-hover:text-blue-600">
+                                {{ log.ref | default('SYS-AUTO') }}
+                            </td>
+
+                            <td class="py-4">
+                                <p class="text-[10px] font-black uppercase text-gray-900">{{ log.user.name }}</p>
+                                <p class="text-[8px] font-bold uppercase text-gray-400">{{ log.user.role | default('User') }}</p>
+                            </td>
+
+                            <td class="py-4 text-[11px] font-medium text-gray-600">
+                                {{ log.action }}
+                            </td>
+
+                            <td class="py-4 text-right">
+                                {% if log.amount %}
+                                    <span class="text-[10px] font-black {{ 'text-emerald-600' if log.type == 'credit' else 'text-red-600' }}">
+                                        {{ '+' if log.type == 'credit' else '-' }}₦{{ "{:,.0f}".format(log.amount) }}
+                                    </span>
+                                {% else %}
+                                    <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest">
+                                        {{ log.status | default('Logged') }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="py-12 text-center border-b border-gray-100">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No log data found for this period.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
                 </tbody>
             </table>
-
-            {% if not pilots %}
-            <div class="py-32 text-center">
-                <p class="text-[10px] font-black text-zinc-300 uppercase tracking-[0.4em]">Zero logistics activity detected for this cycle</p>
-            </div>
-            {% endif %}
         </div>
 
-        <div class="mt-12 p-8 bg-indigo-50/50 rounded-[2.5rem] border border-dashed border-indigo-100 flex items-center gap-6">
-            <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-                <i class="fas fa-circle-info"></i>
-            </div>
-            <p class="text-xs font-medium text-indigo-900/60 leading-relaxed">
-                This report displays real-time liquidity requirements for Pilot bonuses. Settlement occurs automatically when the Pilot crosses the 10-handshake threshold, but HQ can use this data for manual auditing.
-            </p>
+        <div class="hidden print:flex mt-12 pt-8 border-t border-gray-200 justify-between">
+            <p class="text-[8px] font-bold uppercase text-gray-400">FlipTrybe Admin Systems v2.0</p>
+            <p class="text-[8px] font-bold uppercase text-gray-400">Page 1 of 1</p>
         </div>
+
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // High-velocity width application to bypass CSS diagnostic errors
-        document.querySelectorAll('.admin-progress-bar').forEach(bar => {
-            const progressValue = bar.getAttribute('data-value');
-            if (progressValue) {
-                bar.style.width = progressValue + '%';
-            }
-        });
-    });
-</script>
-
 <style>
     @media print {
-        .no-print, nav, footer { display: none !important; }
         body { background: white; }
-        .max-w-7xl { max-width: 100%; }
+        nav, footer, .print\:hidden { display: none !important; }
+        .print\:border-none { border: none !important; }
+        .print\:shadow-none { box-shadow: none !important; }
+        .print\:block { display: block !important; }
     }
 </style>
-
 {% endblock %}

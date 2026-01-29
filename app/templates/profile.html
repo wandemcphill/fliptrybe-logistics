@@ -1,59 +1,107 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto py-16 px-6 lg:px-12 bg-white rounded-[4rem] shadow-2xl my-12">
-    <div class="grid lg:grid-cols-12 gap-16">
+<div class="max-w-4xl mx-auto px-6 py-12">
+    
+    <div class="mb-12">
+        <h1 class="text-4xl font-black uppercase italic tracking-tighter mb-2">Identity <span class="text-blue-600">Settings</span></h1>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+            Manage your Node Configuration & Security Protocols
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
         
-        <div class="lg:col-span-4 border-r border-gray-100 pr-12">
-            <div class="text-center mb-10">
-                <div class="w-32 h-32 bg-zinc-900 rounded-[3rem] mx-auto mb-6 flex items-center justify-center text-white text-4xl font-black">
-                    {{ current_user.name[0] }}
+        <div class="md:col-span-1">
+            <div class="bg-white border border-gray-100 p-8 rounded-[32px] text-center shadow-sm relative overflow-hidden">
+                <div class="w-32 h-32 mx-auto bg-gray-100 rounded-full mb-6 overflow-hidden border-4 border-white shadow-lg relative group">
+                    <img src="{{ image_file }}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white text-[9px] font-black uppercase tracking-widest">
+                        Change
+                    </div>
                 </div>
-                <h2 class="text-2xl font-black text-zinc-900">{{ current_user.name }}</h2>
-                <span class="text-[9px] font-black uppercase tracking-widest {{ 'text-emerald-500' if current_user.is_verified else 'text-amber-500' }}">
-                    Status: {{ current_user.kyc_status }}
-                </span>
+
+                <h2 class="text-lg font-black uppercase">{{ current_user.name }}</h2>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">{{ current_user.email }}</p>
+
+                {% if current_user.is_verified %}
+                    <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-full">
+                        <i class="fas fa-check-circle"></i>
+                        <span class="text-[9px] font-black uppercase tracking-widest">Verified Node</span>
+                    </div>
+                {% else %}
+                    <div class="inline-flex items-center gap-2 bg-gray-100 text-gray-500 px-4 py-2 rounded-full">
+                        <i class="fas fa-user-clock"></i>
+                        <span class="text-[9px] font-black uppercase tracking-widest">Unverified</span>
+                    </div>
+                {% endif %}
             </div>
 
-            <form action="{{ url_for('main.profile') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                <div>
-                    <label class="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-2">Selfie Verification</label>
-                    <input type="file" name="kyc_selfie" class="w-full text-xs text-gray-400 file:bg-zinc-900 file:text-white file:border-none file:px-4 file:py-2 file:rounded-xl">
-                </div>
-                <div>
-                    <label class="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-2">ID Card (Front)</label>
-                    <input type="file" name="kyc_id_card" class="w-full text-xs text-gray-400 file:bg-zinc-900 file:text-white file:border-none file:px-4 file:py-2 file:rounded-xl">
-                </div>
-                <button type="submit" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all">Submit for Vetting</button>
-            </form>
+            <div class="mt-6 bg-blue-50 border border-blue-100 p-6 rounded-[24px] text-center">
+                <p class="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-1">Reputation Score</p>
+                <p class="text-3xl font-black text-blue-600">100<span class="text-sm text-blue-300">/100</span></p>
+            </div>
         </div>
 
-        <div class="lg:col-span-8">
-            <div class="bg-zinc-900 p-10 rounded-[3.5rem] text-white mb-12 flex justify-between items-center shadow-2xl">
-                <div>
-                    <p class="text-[9px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-2">Tribe Liquidity</p>
-                    <h3 class="text-5xl font-black tracking-tighter">₦{{ "{:,.0f}".format(current_user.wallet_balance) }}</h3>
-                </div>
-                <button class="bg-white text-black px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">Add Funds</button>
-            </div>
+        <div class="md:col-span-2">
+            <div class="bg-white border border-gray-100 p-8 md:p-10 rounded-[40px] shadow-sm">
+                <form method="POST" action="" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
 
-            <h3 class="text-xs font-black text-zinc-400 uppercase tracking-[0.3em] mb-8">Transmission Ledger</h3>
-            <div class="space-y-4">
-                {% for entry in history %}
-                <div class="flex justify-between items-center p-6 bg-gray-50 rounded-3xl border border-gray-100">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-zinc-900 shadow-sm">
-                            <i class="fas {{ 'fa-arrow-down' if entry.type == 'Sale' else 'fa-arrow-up' }}"></i>
+                    <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-300 mb-8">Core Data</h3>
+
+                    <div class="mb-6">
+                        {{ form.username.label(class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 pl-2") }}
+                        {% if form.username.errors %}
+                            {{ form.username(class="w-full px-6 py-4 rounded-2xl bg-red-50 border-2 border-red-100 text-sm font-bold text-red-900 focus:outline-none") }}
+                            <div class="mt-1 pl-2 text-[9px] font-bold text-red-500 uppercase">{{ form.username.errors[0] }}</div>
+                        {% else %}
+                            {{ form.username(class="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all") }}
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-6">
+                        {{ form.email.label(class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 pl-2") }}
+                        {% if form.email.errors %}
+                            {{ form.email(class="w-full px-6 py-4 rounded-2xl bg-red-50 border-2 border-red-100 text-sm font-bold text-red-900 focus:outline-none") }}
+                            <div class="mt-1 pl-2 text-[9px] font-bold text-red-500 uppercase">{{ form.email.errors[0] }}</div>
+                        {% else %}
+                            {{ form.email(class="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all") }}
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-10">
+                        {{ form.picture.label(class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 pl-2") }}
+                        <div class="flex items-center gap-4">
+                            {{ form.picture(class="text-[10px] text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-black file:text-white hover:file:bg-gray-800 cursor-pointer") }}
                         </div>
-                        <div>
-                            <p class="text-xs font-black text-zinc-900">{{ entry.type }}</p>
-                            <p class="text-[8px] font-bold text-gray-400">{{ entry.timestamp.strftime('%b %d, %H:%M') }}</p>
+                        {% if form.picture.errors %}
+                            <div class="mt-1 pl-2 text-[9px] font-bold text-red-500 uppercase">{{ form.picture.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="border-gray-100 my-10">
+
+                    <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-300 mb-8">Verification Protocols (KYC)</h3>
+                    
+                    <div class="bg-gray-50 border border-gray-100 rounded-[24px] p-6 mb-8">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-gray-400 shadow-sm shrink-0">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-[10px] font-black uppercase text-gray-900 mb-1">Government ID / CAC</h4>
+                                <p class="text-[10px] text-gray-500 leading-relaxed mb-4">
+                                    To unlock higher transaction limits and the "Verified" badge, upload a clear copy of your NIN, Driver's License, or CAC Certificate.
+                                </p>
+                                <input type="file" name="kyc_document" class="text-[10px] text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-white file:text-gray-900 hover:file:bg-gray-200 cursor-pointer">
+                            </div>
                         </div>
                     </div>
-                    <p class="text-sm font-black {{ 'text-emerald-500' if entry.type == 'Sale' else 'text-rose-500' }}">
-                        {{ '+' if entry.type == 'Sale' else '-' }}₦{{ "{:,.0f}".format(entry.amount) }}
-                    </p>
-                </div>
-                {% endfor %}
+
+                    {{ form.submit(class="w-full bg-black text-white h-16 rounded-2xl text-xs font-black uppercase tracking-[0.2em] hover:bg-emerald-600 hover:shadow-xl hover:shadow-emerald-100 hover:scale-[1.01] transition-all duration-300 cursor-pointer") }}
+                    
+                </form>
             </div>
         </div>
     </div>

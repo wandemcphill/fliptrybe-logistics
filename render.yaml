@@ -1,17 +1,65 @@
 services:
+  # 🚀 SERVICE 1: THE WEB NODE
   - type: web
-    name: fliptrybe
+    name: fliptrybe-core
     runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn run:app
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9  # Explicit patch version for Render's builder
-      - key: FLASK_DEBUG
-        value: "False"
-      - key: DATABASE_URL
-        value: sqlite:////opt/render/project/src/instance/fliptrybe_v2026.db
+    region: oregon
+    plan: starter
+    buildCommand: |
+      pip install -r requirements.txt
+      # Create Disk Symlinks
+      mkdir -p /var/lib/data/products /var/lib/data/avatars /var/lib/data/deliveries
+      ln -sfn /var/lib/data/products app/static/products
+      ln -sfn /var/lib/data/avatars app/static/avatars
+      ln -sfn /var/lib/data/deliveries app/static/deliveries
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 4
+    healthCheckPath: /login
     disk:
-      name: tribe-vault
-      mountPath: /opt/render/project/src/instance
+      name: fliptrybe-assets
+      mountPath: /var/lib/data
       sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fliptrybe-vault
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: fliptrybe-synapse
+          property: connectionString
+      - key: TERMII_API_KEY # 🟢 Swapped Twilio for your Termii Logic
+        sync: false
+
+  # ⚙️ SERVICE 2: THE WORKER NODE (Celery)
+  - type: worker
+    name: fliptrybe-engine
+    runtime: python
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A app.celery worker --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fliptrybe-vault
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: fliptrybe-synapse
+          property: connectionString
+
+  # ⚡ SERVICE 3: THE SYNAPSE (Redis)
+  - type: redis
+    name: fliptrybe-synapse
+    region: oregon
+    plan: starter
+    ipAllowList: []
+
+# 💾 DATABASES: THE VAULT (PostgreSQL)
+databases:
+  - name: fliptrybe-vault
+    databaseName: fliptrybe
+    user: admin
+    plan: starter
+    region: oregon

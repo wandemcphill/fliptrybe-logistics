@@ -1,197 +1,154 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto py-16 px-6 lg:px-12">
+<div class="max-w-7xl mx-auto px-6 py-12">
     
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-16 gap-10">
-        <div class="animate-in fade-in slide-in-from-left-4 duration-700">
-            <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-2">Operations Terminal</p>
-            <h1 class="text-5xl font-black text-gray-900 tracking-tighter">Inventory Control</h1>
-            <p class="text-gray-400 font-medium mt-2">Scale your assets across Abuja, Lagos, and beyond.</p>
+    <div class="bg-gray-900 text-white p-10 rounded-[40px] mb-12 flex flex-col md:flex-row justify-between items-center shadow-2xl relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20" style="background-image: url('https://www.transparenttextures.com/patterns/cubes.png');"></div>
+
+        <div class="relative z-10">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
+                <span class="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-500">System Online</span>
+            </div>
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter">Pilot <span class="text-blue-500">Office</span></h1>
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">
+                Logistics Command Node // ID: {{ current_user.id|string|zfill(4) }}
+            </p>
         </div>
 
-        <div class="bg-zinc-900 text-white p-8 rounded-[3rem] flex items-center gap-10 shadow-2xl border border-white/5 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700"></div>
-            
-            <div class="relative z-10">
-                <p class="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-1">Commission Yield</p>
-                <h2 class="text-3xl font-black text-emerald-400 tracking-tighter">₦{{ "{:,.2f}".format(current_user.wallet_balance) }}</h2>
+        <div class="relative z-10 mt-8 md:mt-0 flex gap-6 text-right">
+            <div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Missions</p>
+                <h3 class="text-3xl font-black text-white">{{ completed_count | default(0) }}</h3>
             </div>
-            <div class="w-px h-12 bg-white/10 relative z-10"></div>
-            <div class="relative z-10">
-                <p class="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-1">Active Assets</p>
-                <h2 class="text-3xl font-black tracking-tighter">{{ listings|length }}</h2>
+            <div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Earnings</p>
+                <h3 class="text-3xl font-black text-emerald-400">₦{{ "{:,.0f}".format(total_earnings | default(0)) }}</h3>
             </div>
         </div>
     </div>
 
-    <div class="grid lg:grid-cols-12 gap-16">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
         
-        <div class="lg:col-span-4">
-            <div class="bg-white p-10 rounded-[3.5rem] shadow-2xl shadow-gray-200/50 border border-gray-100 sticky top-28">
-                <h2 class="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-8 flex items-center gap-3">
-                    <span class="w-2 h-2 bg-indigo-600 rounded-full animate-pulse"></span>
-                    Initialize New Listing
-                </h2>
-                
-                <form action="{{ url_for('main.upload_item') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 ml-1">Asset Identity</label>
-                        <input type="text" name="title" placeholder="e.g. iPhone 15 Pro Max" required
-                               class="w-full p-5 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-100 outline-none transition-all duration-300">
-                    </div>
+        <div>
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400">Mission Radar</h3>
+                <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest animate-pulse">
+                    {{ available_jobs|length }} Detected
+                </span>
+            </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 ml-1">Territory</label>
-                            <select name="state" class="w-full p-5 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold focus:bg-white outline-none cursor-pointer appearance-none">
-                                <option>Lagos</option>
-                                <option>Abuja</option>
-                                <option>Port Harcourt</option>
-                                <option>Ibadan</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 ml-1">City</label>
-                            <input type="text" name="city" placeholder="Ikeja" required
-                                   class="w-full p-5 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold focus:bg-white outline-none">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 ml-1">Classification</label>
-                        <select name="category" id="cat-select" onchange="updatePriceSuggestion()" 
-                                class="w-full p-5 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold focus:bg-white outline-none cursor-pointer appearance-none">
-                            <option value="Declutter">📦 Declutter Inventory</option>
-                            <option value="Shortlet">🏠 Shortlet Property</option>
-                            <option value="Gadgets">📱 Tech & Mobile</option>
-                            <option value="Vehicles">🚗 Logistics & Motors</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 ml-1">Valuation (₦)</label>
-                        <input type="number" name="price" id="price-input" oninput="updatePriceSuggestion()" placeholder="0" required
-                               class="w-full p-5 bg-zinc-900 border border-transparent rounded-2xl text-lg font-black text-emerald-400 placeholder:text-zinc-700 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all">
+            <div class="space-y-6">
+                {% if available_jobs %}
+                    {% for job in available_jobs %}
+                    <div class="bg-white border border-gray-100 p-6 rounded-[32px] hover:shadow-xl hover:border-blue-200 transition-all duration-300 group relative overflow-hidden">
                         
-                        <div id="suggestion-box" class="mt-4 p-5 rounded-2xl bg-indigo-600 text-white hidden animate-in fade-in zoom-in-95 duration-500 shadow-xl shadow-indigo-100">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i class="fas fa-brain text-[10px]"></i>
-                                <p class="text-[9px] font-black uppercase tracking-widest opacity-70">Market Analysis</p>
+                        <div class="flex items-center justify-between mb-4 relative z-10">
+                            <div class="text-left">
+                                <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pickup</p>
+                                <p class="text-xs font-black uppercase text-gray-900">{{ job.listing.state }}</p>
                             </div>
-                            <p id="suggestion-text" class="text-[11px] font-bold leading-relaxed"></p>
-                        </div>
-                    </div>
-
-                    <div class="pt-2">
-                        <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 ml-1">Visual Documentation</label>
-                        <input type="file" name="image" accept="image/*"
-                               class="w-full text-[10px] text-gray-400 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-zinc-100 file:text-zinc-500 hover:file:bg-black hover:file:text-white cursor-pointer transition-all">
-                    </div>
-
-                    <button type="submit" class="w-full bg-black text-white font-black py-6 rounded-3xl hover:bg-indigo-600 transition-all duration-500 shadow-2xl shadow-gray-200 active:scale-95 text-[11px] uppercase tracking-[0.2em] mt-4">
-                        Deploy to Marketplace
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <div class="lg:col-span-8">
-            <div class="flex items-end justify-between mb-10 px-2">
-                <h2 class="text-2xl font-black text-gray-900 tracking-tight">Active Transmissions</h2>
-                <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Live Updates</span>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {% for listing in listings %}
-                <div class="bg-white rounded-[3.5rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-700 group relative">
-                    
-                    <div class="relative h-64 overflow-hidden">
-                        {% if listing.image_filename %}
-                        <img src="{{ url_for('static', filename='uploads/' + listing.image_filename) }}" 
-                             class="w-full h-full object-cover group-hover:scale-110 transition duration-[2s] ease-out">
-                        {% else %}
-                        <div class="w-full h-full bg-gray-50 flex items-center justify-center text-gray-200 text-4xl"><i class="fas fa-box"></i></div>
-                        {% endif %}
-                        
-                        <div class="absolute top-6 left-6 flex gap-2">
-                            <span class="bg-white/90 backdrop-blur-md text-black px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">
-                                {{ listing.category }}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-8">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-black text-gray-900 text-xl truncate pr-4 mb-1">{{ listing.title }}</h3>
-                                <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest">
-                                    <i class="fas fa-location-dot text-indigo-500 mr-1"></i> {{ listing.city }}
-                                </p>
+                            <div class="flex-grow mx-4 h-px bg-gray-200 relative">
+                                <i class="fas fa-plane text-gray-300 absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 text-xs"></i>
                             </div>
                             <div class="text-right">
-                                <p class="text-xl font-black text-indigo-600 tracking-tighter">₦{{ "{:,.0f}".format(listing.price) }}</p>
+                                <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dropoff</p>
+                                <p class="text-xs font-black uppercase text-gray-900">{{ job.buyer.state | default('Lagos') }}</p>
                             </div>
                         </div>
-                        
-                        <div class="flex justify-between items-center pt-6 border-t border-gray-50">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full {% if listing.status == 'Available' %}bg-emerald-500 animate-pulse{% else %}bg-rose-500{% endif %}"></span>
-                                <span class="text-[9px] font-black uppercase tracking-widest text-gray-400">{{ listing.status }}</span>
+
+                        <div class="bg-gray-50 rounded-xl p-4 mb-6 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-100">
+                                <i class="fas fa-box text-gray-400"></i>
                             </div>
-                            
-                            <form action="{{ url_for('main.delete_listing', listing_id=listing.id) }}" method="POST" onsubmit="return confirm('Retract asset from marketplace?');">
-                                <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-gray-300 hover:text-rose-500 transition-colors">Retract Asset</button>
-                            </form>
+                            <div>
+                                <h4 class="text-[10px] font-black uppercase text-gray-900">{{ job.listing.title }}</h4>
+                                <p class="text-[9px] text-gray-500">Base Fee: ₦{{ "{:,.0f}".format(job.delivery_fee | default(2500)) }}</p>
+                            </div>
                         </div>
+
+                        <form action="{{ url_for('main.accept_job', order_id=job.id) }}" method="POST">
+                            <button class="w-full bg-black text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-lg">
+                                Accept Mission
+                            </button>
+                        </form>
+
                     </div>
-                </div>
+                    {% endfor %}
                 {% else %}
-                <div class="col-span-full py-32 text-center bg-gray-50 rounded-[4rem] border-2 border-dashed border-gray-100 flex flex-col items-center">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-3xl mb-6 grayscale opacity-30">📂</div>
-                    <p class="text-gray-400 font-black uppercase text-[10px] tracking-[0.3em]">Vault Empty</p>
-                    <p class="text-xs text-gray-300 mt-2">No active assets detected in your command sector.</p>
-                </div>
-                {% endfor %}
+                    <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-[40px] p-12 text-center">
+                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm animate-spin-slow">
+                            <i class="fas fa-radar text-gray-300 text-3xl"></i>
+                        </div>
+                        <h3 class="text-sm font-black uppercase text-gray-900 mb-1">Scanning Grid...</h3>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+                            No unassigned logistics requests in your sector.
+                        </p>
+                    </div>
+                {% endif %}
             </div>
         </div>
+
+        <div>
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8">Active Operations</h3>
+
+            {% if active_missions %}
+                {% for mission in active_missions %}
+                <div class="bg-blue-50 border border-blue-100 p-8 rounded-[32px] relative overflow-hidden mb-8">
+                    <div class="absolute top-0 right-0 bg-blue-600 text-white px-4 py-2 rounded-bl-2xl text-[9px] font-black uppercase tracking-widest">
+                        In Progress
+                    </div>
+
+                    <p class="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-4">Waybill #{{ mission.handshake_id }}</p>
+
+                    <div class="bg-white/50 rounded-2xl p-4 mb-6 backdrop-blur-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[9px] font-bold text-gray-500 uppercase">Client Contact</span>
+                            <a href="tel:{{ mission.buyer.phone }}" class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-emerald-500 transition-colors">
+                                <i class="fas fa-phone text-xs"></i>
+                            </a>
+                        </div>
+                        <p class="text-sm font-black uppercase text-gray-900">{{ mission.buyer.name }}</p>
+                        <p class="text-[10px] text-gray-600 mt-1">{{ mission.buyer.address | default('Address Hidden') }}</p>
+                    </div>
+
+                    {% if mission.delivery_status == 'In Transit' %}
+                        <div class="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm">
+                            <h4 class="text-[10px] font-black uppercase text-gray-900 mb-4">Finalize Delivery</h4>
+                            
+                            <form action="{{ url_for('main.upload_pod', order_id=mission.id) }}" method="POST" enctype="multipart/form-data">
+                                <label class="block w-full border-2 border-dashed border-gray-200 rounded-xl p-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all mb-4">
+                                    <i class="fas fa-camera text-gray-400 text-xl mb-2"></i>
+                                    <span class="block text-[9px] font-bold text-gray-500 uppercase">Capture Proof of Delivery</span>
+                                    <input type="file" name="pod_image" class="hidden" onchange="this.parentElement.style.borderColor = '#10B981'; this.nextElementSibling.innerText = 'Image Selected';">
+                                </label>
+
+                                <button class="w-full bg-emerald-500 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200">
+                                    Confirm Dropoff
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <form action="{{ url_for('main.start_delivery', order_id=mission.id) }}" method="POST">
+                            <button class="w-full bg-black text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition-all">
+                                <i class="fas fa-box-open mr-2"></i> Confirm Pickup
+                            </button>
+                        </form>
+                    {% endif %}
+
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="bg-white border border-gray-100 rounded-[40px] p-12 text-center opacity-50">
+                    <i class="fas fa-coffee text-gray-300 text-3xl mb-4"></i>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+                        Status: Idle. Accept a mission to engage protocols.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
     </div>
 </div>
-
-<script>
-/**
- * Market Intelligence Logic
- * Provides real-time feedback on pricing compared to regional averages.
- */
-function updatePriceSuggestion() {
-    const category = document.getElementById('cat-select').value;
-    const priceInput = document.getElementById('price-input').value;
-    const suggestionBox = document.getElementById('suggestion-box');
-    const suggestionText = document.getElementById('suggestion-text');
-
-    // Thresholds from Flask (Safe fallback if missing)
-    const sAvg = Number("{{ s_avg | default(75000) }}");
-    const dAvg = Number("{{ d_avg | default(25000) }}");
-    const currentAvg = (category.includes("Shortlet")) ? sAvg : dAvg;
-
-    if (priceInput > 0) {
-        suggestionBox.classList.remove('hidden');
-        const diff = ((priceInput - currentAvg) / currentAvg) * 100;
-        
-        let analysis = "";
-        if (diff > 25) {
-            analysis = `The system detects a <span class="underline">High Premium</span>. You are ${Math.abs(Math.round(diff))}% above market average. Expect lower conversion but higher yield.`;
-        } else if (diff < -15) {
-            analysis = `The system detects a <span class="underline">High Demand</span> signal. You are ${Math.abs(Math.round(diff))}% below average. Liquidation will be rapid.`;
-        } else {
-            analysis = `Listing is <span class="underline">Optimized</span>. You are perfectly aligned with the regional average of ₦${currentAvg.toLocaleString()}.`;
-        }
-        
-        suggestionText.innerHTML = analysis;
-    } else {
-        suggestionBox.classList.add('hidden');
-    }
-}
-
-document.addEventListener('DOMContentLoaded', updatePriceSuggestion);
-</script>
 {% endblock %}

@@ -1,107 +1,133 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 py-12 h-[calc(100vh-120px)] flex flex-col">
+<div class="h-[calc(100vh-80px)] bg-gray-50 flex flex-col md:flex-row overflow-hidden">
     
-    <div class="bg-white/80 backdrop-blur-xl border border-gray-100 p-6 rounded-t-[2.5rem] flex items-center justify-between shadow-sm z-20">
-        <div class="flex items-center gap-4">
-            <a href="{{ url_for('main.inbox') }}" class="w-10 h-10 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-50 hover:text-black transition-all">
-                <i class="fas fa-chevron-left text-sm"></i>
-            </a>
-            <div class="relative">
-                <div class="w-12 h-12 rounded-2xl overflow-hidden bg-zinc-900 border border-white shadow-md">
-                    {% if partner.image_file %}
-                    <img src="{{ url_for('static', filename='uploads/' + partner.image_file) }}" class="w-full h-full object-cover">
-                    {% else %}
-                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-black text-lg">
-                        {{ partner.name[0] | upper }}
+    <div class="w-full md:w-80 bg-white border-r border-gray-100 flex flex-col z-20">
+        <div class="p-6 border-b border-gray-50">
+            <h2 class="text-xs font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Comm Link</h2>
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-sm font-black uppercase italic">Encrypted <span class="text-blue-600">Feed</span></span>
+            </div>
+        </div>
+
+        <div class="flex-grow overflow-y-auto p-4 space-y-2">
+            {% if chats %}
+                {% for chat in chats %}
+                <a href="#" class="block p-4 rounded-2xl transition-all border border-transparent {{ 'bg-blue-50 border-blue-100 shadow-sm' if chat.active else 'hover:bg-gray-50' }}">
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="text-xs font-black uppercase tracking-wide {{ 'text-blue-900' if chat.active else 'text-gray-900' }}">
+                            {{ chat.partner_name }}
+                        </h4>
+                        <span class="text-[9px] font-bold text-gray-400">{{ chat.last_time }}</span>
                     </div>
-                    {% endif %}
-                </div>
-                <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-white rounded-full"></span>
-            </div>
-            <div>
-                <h2 class="font-black text-gray-900 leading-none mb-1">{{ partner.name }}</h2>
-                <div class="flex items-center gap-2">
-                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">{{ partner.role }}</span>
-                    <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
-                    <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Signal Active</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100">
-            <i class="fas fa-lock text-[10px] text-gray-400"></i>
-            <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Secure Link</span>
-        </div>
-    </div>
-
-    <div class="flex-grow bg-white border-x border-gray-50 p-6 overflow-y-auto space-y-6 no-scrollbar" id="chat-container">
-        <div class="flex justify-center mb-8">
-            <span class="bg-gray-50 text-[9px] font-bold text-gray-400 px-4 py-1.5 rounded-full uppercase tracking-widest border border-gray-100">
-                End-to-end encrypted transmission initiated
-            </span>
-        </div>
-
-        {% for msg in messages %}
-            {% if msg.sender_id == current_user.id %}
-            <div class="flex flex-col items-end gap-1 group">
-                <div class="bg-gradient-to-br from-indigo-600 to-violet-700 text-white px-6 py-4 rounded-[2rem] rounded-tr-sm max-w-[85%] sm:max-w-[70%] text-sm font-medium shadow-xl shadow-indigo-100 animate-in fade-in slide-in-from-right-4 duration-300">
-                    {{ msg.body }}
-                </div>
-                <span class="text-[8px] font-bold text-gray-300 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity mr-2">
-                    Sent • {{ msg.timestamp.strftime('%H:%M') }}
-                </span>
-            </div>
+                    <p class="text-[10px] font-medium truncate {{ 'text-blue-600' if chat.active else 'text-gray-500' }}">
+                        {{ chat.last_message }}
+                    </p>
+                </a>
+                {% endfor %}
             {% else %}
-            <div class="flex flex-col items-start gap-1 group">
-                <div class="bg-white border border-gray-100 text-gray-800 px-6 py-4 rounded-[2rem] rounded-tl-sm max-w-[85%] sm:max-w-[70%] text-sm font-medium shadow-sm animate-in fade-in slide-in-from-left-4 duration-300">
-                    {{ msg.body }}
+                <div class="text-center py-8 opacity-50">
+                    <i class="fas fa-satellite-dish text-gray-300 text-2xl mb-2"></i>
+                    <p class="text-[9px] font-black uppercase text-gray-400">No active channels</p>
                 </div>
-                <span class="text-[8px] font-bold text-gray-300 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                    {{ partner.name }} • {{ msg.timestamp.strftime('%H:%M') }}
-                </span>
-            </div>
             {% endif %}
-        {% endfor %}
-    </div>
+        </div>
 
-    <div class="bg-white border border-gray-100 p-6 rounded-b-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
-        <form action="{{ url_for('main.chat', user_id=partner.id) }}" method="POST" class="flex gap-4 items-center">
-            <div class="flex-grow relative group">
-                <input type="text" name="message" placeholder="Initialize message..." required autocomplete="off" autofocus
-                       class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-medium placeholder:text-gray-400 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-200 outline-none transition-all duration-300">
-                <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3 text-gray-300">
-                    <i class="fas fa-paperclip hover:text-indigo-500 cursor-pointer transition"></i>
-                    <i class="far fa-face-smile hover:text-indigo-500 cursor-pointer transition"></i>
+        <div class="p-4 border-t border-gray-50 bg-gray-50/50">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold">
+                    {{ current_user.name[0] }}
+                </div>
+                <div>
+                    <p class="text-[10px] font-black uppercase text-gray-900">{{ current_user.name }}</p>
+                    <p class="text-[8px] font-bold uppercase text-emerald-500">Online</p>
                 </div>
             </div>
-            <button class="bg-zinc-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center hover:bg-indigo-600 hover:shadow-2xl hover:shadow-indigo-200 transition-all duration-500 active:scale-90 group">
-                <i class="fas fa-paper-plane text-sm group-hover:rotate-12 transition-transform"></i>
-            </button>
-        </form>
+        </div>
     </div>
 
+    <div class="flex-grow flex flex-col bg-gray-50 relative">
+        
+        <div class="bg-white border-b border-gray-100 p-6 flex justify-between items-center shadow-sm z-10">
+            <div>
+                <h3 class="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                    {% if current_chat %}
+                        {{ current_chat.partner_name }}
+                        {% if current_chat.is_verified %}
+                            <i class="fas fa-check-circle text-emerald-500 text-xs"></i>
+                        {% endif %}
+                    {% else %}
+                        Select a Channel
+                    {% endif %}
+                </h3>
+                <p class="text-[9px] font-bold text-gray-400 uppercase mt-1">
+                    {% if current_chat %}
+                        Order ID: #{{ current_chat.order_ref }}
+                    {% else %}
+                        Secure Protocol
+                    {% endif %}
+                </p>
+            </div>
+            <button class="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-colors">
+                <i class="fas fa-flag text-xs"></i>
+            </button>
+        </div>
+
+        <div class="flex-grow overflow-y-auto p-6 space-y-6 flex flex-col" id="message-container">
+            {% if messages %}
+                {% for msg in messages %}
+                <div class="flex {{ 'justify-end' if msg.sender_id == current_user.id else 'justify-start' }}">
+                    <div class="max-w-[75%]">
+                        <div class="p-4 rounded-2xl text-xs font-medium leading-relaxed shadow-sm 
+                            {{ 'bg-black text-white rounded-br-none' if msg.sender_id == current_user.id else 'bg-white text-gray-700 border border-gray-100 rounded-bl-none' }}">
+                            {{ msg.content }}
+                        </div>
+                        <p class="text-[8px] font-bold uppercase text-gray-400 mt-2 {{ 'text-right' if msg.sender_id == current_user.id else 'text-left' }}">
+                            {{ msg.timestamp }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="flex-grow flex flex-col items-center justify-center opacity-40">
+                    <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-comments text-3xl text-gray-400"></i>
+                    </div>
+                    <p class="text-xs font-black uppercase text-gray-400 tracking-widest">Start the conversation</p>
+                    <p class="text-[9px] font-bold text-gray-300 mt-2 max-w-xs text-center">
+                        Never share passwords or banking PINs. All chats are monitored by the FlipTrybe High Table for dispute resolution.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="p-4 bg-white border-t border-gray-100">
+            <form class="flex gap-4 items-end">
+                <div class="flex-grow relative">
+                    <textarea 
+                        rows="1" 
+                        class="w-full pl-6 pr-12 py-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all text-xs font-bold resize-none scrollbar-hide"
+                        placeholder="Type your secure message..."
+                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                    
+                    <button type="button" class="absolute right-4 bottom-3 text-gray-400 hover:text-blue-600 transition-colors">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                </div>
+                <button type="submit" class="w-12 h-12 bg-black text-white rounded-2xl hover:bg-blue-600 transition-all shadow-lg shadow-blue-100 flex items-center justify-center">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
 </div>
 
 <script>
-    /**
-     * Silicon Valley UX Logic:
-     * 1. Auto-scrolls to the absolute bottom of the transmission history.
-     * 2. Adds a slight delay to ensure all DOM elements are rendered.
-     */
-    function syncTerminal() {
-        const container = document.getElementById('chat-container');
-        container.scrollTo({
-            top: container.scrollHeight,
-            behavior: 'smooth'
-        });
-    }
-
-    window.onload = syncTerminal;
-    
-    // Auto-scroll on new message input to maintain visibility
-    document.querySelector('form').addEventListener('submit', () => {
-        setTimeout(syncTerminal, 50);
-    });
+    // Auto-scroll to bottom
+    const container = document.getElementById('message-container');
+    container.scrollTop = container.scrollHeight;
 </script>
 {% endblock %}

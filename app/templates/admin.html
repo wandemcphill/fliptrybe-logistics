@@ -1,115 +1,151 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto px-6 py-20">
-    <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-        <div>
-            <h1 class="text-5xl font-black tracking-tighter">Command Center</h1>
-            <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.4em] mt-2">FlipTrybe Network Oversight // v1.1</p>
+<div class="max-w-7xl mx-auto px-6 py-12">
+    
+    <div class="bg-gray-900 text-white p-10 rounded-[40px] mb-12 flex flex-col md:flex-row justify-between items-center shadow-2xl relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10" style="background-image: url('https://www.transparenttextures.com/patterns/stardust.png');"></div>
+        
+        <div class="relative z-10">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
+                <span class="text-[9px] font-black uppercase tracking-[0.3em] text-red-500">God Mode Active</span>
+            </div>
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter">The <span class="text-white">Overseer</span></h1>
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">
+                System Administrator // Clearance Level 5
+            </p>
         </div>
-        <div class="flex gap-10">
-            <div class="text-right">
-                <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Total Revenue</p>
-                <p class="text-3xl font-black tracking-tighter">₦{{ "{:,.2f}".format(tribe_revenue) }}</p>
-            </div>
-            <div class="text-right border-l border-gray-100 pl-10">
-                <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Active Nodes</p>
-                <p class="text-3xl font-black tracking-tighter">{{ users|length }}</p>
-            </div>
+
+        <div class="relative z-10 mt-8 md:mt-0 flex gap-4">
+            <a href="/admin" class="bg-white text-black px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center gap-2">
+                <i class="fas fa-database"></i> Raw Database
+            </a>
+            <button class="border border-gray-700 text-gray-300 px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all">
+                <i class="fas fa-download mr-2"></i> Export Logs
+            </button>
         </div>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
         
-        <div class="space-y-8">
-            <div class="flex items-center gap-4">
-                <span class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">01 // Identity Verification Queue</span>
-                <div class="flex-grow h-[1px] bg-gray-100"></div>
-            </div>
-
-            {% for user in pending_kyc %}
-            <div class="bg-white border border-gray-100 rounded-[3rem] p-8 shadow-sm hover:shadow-xl transition-all">
-                <div class="flex justify-between items-start mb-8">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100">
-                            <img src="{{ url_for('static', filename='uploads/avatars/' + (user.image_file or 'default.jpg')) }}" class="w-full h-full object-cover">
-                        </div>
-                        <div>
-                            <h4 class="font-black text-gray-900">{{ user.username }}</h4>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ user.role }}</p>
-                        </div>
-                    </div>
-                    <span class="px-3 py-1 bg-amber-50 text-amber-600 rounded-lg text-[8px] font-black uppercase tracking-widest">Pending Review</span>
+        <div class="bg-blue-50 border border-blue-100 p-8 rounded-[32px] group hover:shadow-lg transition-all">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                    <i class="fas fa-lock"></i>
                 </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-8">
-                    <div class="space-y-2">
-                        <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Selfie Signal</p>
-                        <a href="{{ url_for('static', filename='uploads/kyc_docs/' + user.kyc_selfie_file) }}" target="_blank" class="block aspect-video bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 hover:border-indigo-500 transition-all">
-                            <img src="{{ url_for('static', filename='uploads/kyc_docs/' + user.kyc_selfie_file) }}" class="w-full h-full object-cover">
-                        </a>
-                    </div>
-                    <div class="space-y-2">
-                        <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">ID Document</p>
-                        <a href="{{ url_for('static', filename='uploads/kyc_docs/' + user.kyc_id_card_file) }}" target="_blank" class="block aspect-video bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 hover:border-indigo-500 transition-all">
-                            <img src="{{ url_for('static', filename='uploads/kyc_docs/' + user.kyc_id_card_file) }}" class="w-full h-full object-cover">
-                        </a>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <form action="{{ url_for('admin.audit_kyc', user_id=user.id, status='approve') }}" method="POST" class="flex-grow">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button class="w-full py-4 bg-black text-white rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all">Verify Node</button>
-                    </form>
-                    <form action="{{ url_for('admin.audit_kyc', user_id=user.id, status='reject') }}" method="POST" class="flex-grow">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button class="w-full py-4 bg-gray-50 text-rose-500 border border-rose-50 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all">Reject</button>
-                    </form>
-                </div>
+                <span class="text-[9px] font-black uppercase text-blue-400 bg-blue-100/50 px-2 py-1 rounded">+5%</span>
             </div>
-            {% else %}
-            <div class="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
-                <p class="text-gray-400 font-bold uppercase text-[10px]">Queue Clear. No pending identity signals.</p>
-            </div>
-            {% endfor %}
+            <p class="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-1">Escrow Vault</p>
+            <h3 class="text-3xl font-black text-blue-900">₦{{ "{:,.0f}".format(total_escrow | default(0)) }}</h3>
         </div>
 
-        <div class="space-y-8">
-            <div class="flex items-center gap-4">
-                <span class="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em]">02 // Signal Disruptions (Disputes)</span>
-                <div class="flex-grow h-[1px] bg-gray-100"></div>
-            </div>
-
-            {% for dispute in disputes %}
-            <div class="bg-white border border-rose-100 rounded-[3rem] p-8 shadow-sm">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h4 class="font-black text-gray-900">Order #FT-{{ dispute.order_id + 1000 }}</h4>
-                        <p class="text-rose-500 text-[9px] font-black uppercase tracking-widest">{{ dispute.reason }}</p>
-                    </div>
-                    <p class="text-xl font-black">₦{{ "{:,.0f}".format(dispute.order.total_price) }}</p>
-                </div>
-                <p class="text-xs text-gray-500 font-medium mb-8 leading-relaxed">"{{ dispute.description }}"</p>
-                
-                <div class="flex gap-4 p-4 bg-rose-50 rounded-2xl mb-8">
-                    <div class="text-[8px] font-bold uppercase text-rose-400">
-                        <span class="block">Buyer: {{ dispute.order.buyer.username }}</span>
-                        <span class="block">Seller: {{ dispute.order.listing.seller.username }}</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <button class="py-4 bg-rose-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all">Refund Buyer</button>
-                    <button class="py-4 bg-white border border-gray-200 text-black rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">Pay Seller</button>
+        <div class="bg-emerald-50 border border-emerald-100 p-8 rounded-[32px] group hover:shadow-lg transition-all">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
+                    <i class="fas fa-coins"></i>
                 </div>
             </div>
-            {% else %}
-            <div class="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
-                <p class="text-gray-400 font-bold uppercase text-[10px]">Ecosystem Stable. Zero Active Disputes.</p>
-            </div>
-            {% endfor %}
+            <p class="text-[9px] font-black uppercase tracking-widest text-emerald-600 mb-1">Platform Fees</p>
+            <h3 class="text-3xl font-black text-emerald-900">₦{{ "{:,.0f}".format(total_revenue | default(0)) }}</h3>
         </div>
 
+        <div class="bg-white border border-gray-100 p-8 rounded-[32px] shadow-sm">
+            <p class="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Nodes</p>
+            <h3 class="text-3xl font-black text-gray-900">{{ user_count | default(0) }}</h3>
+            <p class="text-[8px] text-gray-400 mt-1 uppercase">Active Identities</p>
+        </div>
+
+        <div class="bg-red-50 border border-red-100 p-8 rounded-[32px] shadow-sm relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 text-red-100 text-8xl opacity-50">
+                <i class="fas fa-gavel"></i>
+            </div>
+            <p class="text-[9px] font-black uppercase tracking-widest text-red-600 mb-2">Active Disputes</p>
+            <h3 class="text-3xl font-black text-red-900">{{ dispute_count | default(0) }}</h3>
+            <p class="text-[8px] text-red-400 mt-1 uppercase font-bold">Action Required</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        
+        <div>
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400">Dispute Terminal</h3>
+                <span class="bg-red-100 text-red-600 px-2 py-1 rounded text-[9px] font-black uppercase">{{ disputes|length if disputes else 0 }} Open</span>
+            </div>
+
+            {% if disputes %}
+                <div class="space-y-4">
+                {% for case in disputes %}
+                    <div class="bg-white border border-gray-100 p-6 rounded-[24px] shadow-sm hover:shadow-md transition-all">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="bg-red-50 text-red-600 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest">
+                                Case #{{ case.id }}
+                            </span>
+                            <span class="text-[9px] font-bold text-gray-400">{{ case.created_at.strftime('%d %b') }}</span>
+                        </div>
+                        <h4 class="font-bold text-sm mb-1">Reason: {{ case.reason }}</h4>
+                        <p class="text-[10px] text-gray-500 mb-4">Claimant: {{ case.claimant.name }}</p>
+                        
+                        <div class="flex gap-2">
+                            <button class="flex-1 bg-black text-white py-2 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-gray-800">
+                                Review Evidence
+                            </button>
+                            <button class="flex-1 border border-gray-200 text-gray-500 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-red-50 hover:text-red-600">
+                                Resolve
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-12 text-center bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200">
+                    <i class="fas fa-check-circle text-gray-300 text-3xl mb-4"></i>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">System Nominal</p>
+                    <p class="text-[9px] text-gray-300 mt-1">No active conflicts reported.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400">Verification Queue</h3>
+                <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[9px] font-black uppercase">{{ kyc_queue|length if kyc_queue else 0 }} Pending</span>
+            </div>
+
+            {% if kyc_queue %}
+                <div class="bg-white border border-gray-100 rounded-[32px] overflow-hidden">
+                    <table class="w-full text-left">
+                        <tbody class="divide-y divide-gray-50">
+                            {% for user in kyc_queue %}
+                            <tr class="hover:bg-gray-50 transition-colors group">
+                                <td class="p-4">
+                                    <p class="text-xs font-bold">{{ user.name }}</p>
+                                    <p class="text-[9px] text-gray-400 uppercase">{{ user.email }}</p>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span class="text-[9px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                        {{ 'Driver' if user.is_driver else 'Merchant' }}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-right">
+                                    <a href="#" class="text-[9px] font-black uppercase text-gray-400 hover:text-black hover:underline">
+                                        Inspect Documents
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="p-12 text-center bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200">
+                    <i class="fas fa-user-shield text-gray-300 text-3xl mb-4"></i>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Queue Empty</p>
+                    <p class="text-[9px] text-gray-300 mt-1">All identity nodes verified.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

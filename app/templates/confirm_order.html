@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-12">
+    
+    <a href="{{ url_for('main.product_detail', listing_id=listing.id) }}" class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black mb-8 transition-colors">
+        <i class="fas fa-arrow-left"></i> Abort Transaction
+    </a>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
+        
+        <div>
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter mb-2">Review <span class="text-blue-600">Order</span></h1>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-12">
+                Verify asset details before authorizing fund lock.
+            </p>
+
+            <div class="bg-white border border-gray-100 rounded-[40px] p-8 shadow-sm mb-8 flex gap-6 items-center">
+                <div class="w-24 h-24 bg-gray-100 rounded-2xl overflow-hidden shrink-0">
+                    <img src="{{ url_for('static', filename='uploads/products/' + listing.image_filename) }}" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <h3 class="text-lg font-black uppercase italic tracking-tight">{{ listing.title }}</h3>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ listing.category }}</p>
+                    <p class="text-sm font-black text-gray-900">₦{{ "{:,.0f}".format(listing.price) }}</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-6 bg-gray-50 rounded-[32px] border border-gray-100">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center border border-gray-100 shadow-sm text-gray-400">
+                    <i class="fas fa-store"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Merchant Node</p>
+                    <p class="text-xs font-black uppercase text-gray-900">{{ listing.author.name }}</p>
+                    <div class="flex items-center gap-1 mt-1">
+                        <i class="fas fa-shield-alt text-[10px] text-emerald-500"></i>
+                        <span class="text-[9px] font-bold text-emerald-600 uppercase">Verified Merchant</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 p-6 bg-blue-50 border border-blue-100 rounded-[32px] flex gap-4">
+                <i class="fas fa-lock text-blue-600 text-xl mt-1"></i>
+                <div>
+                    <h4 class="text-[10px] font-black uppercase text-blue-800 tracking-widest mb-1">Escrow Protection Active</h4>
+                    <p class="text-[10px] text-blue-600 leading-relaxed">
+                        Funds will be locked in the FlipTrybe Vault. The merchant is <strong>NOT</strong> paid until you confirm you have received this item.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative">
+            <div class="bg-white border border-gray-100 p-10 rounded-[40px] shadow-2xl shadow-gray-200/50 sticky top-24">
+                
+                <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-300 mb-8">Bill of Lading</h3>
+
+                <div class="space-y-4 mb-8 border-b border-gray-100 pb-8">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-bold text-gray-500 uppercase">Item Subtotal</span>
+                        <span class="text-[11px] font-black text-gray-900">₦{{ "{:,.2f}".format(listing.price) }}</span>
+                    </div>
+                    
+                    {% set delivery_fee = 2500 %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-bold text-gray-500 uppercase">Logistics (Estimated)</span>
+                        <span class="text-[11px] font-black text-gray-900">₦{{ "{:,.2f}".format(delivery_fee) }}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-bold text-gray-500 uppercase">Escrow Service Fee</span>
+                        <span class="text-[11px] font-black text-emerald-600">Waived</span>
+                    </div>
+                </div>
+
+                {% set total_cost = listing.price + delivery_fee %}
+                <div class="flex justify-between items-end mb-8">
+                    <span class="text-xs font-black uppercase text-gray-400 tracking-widest">Total Liability</span>
+                    <span class="text-3xl font-black text-black">₦{{ "{:,.2f}".format(total_cost) }}</span>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-2xl mb-8 flex justify-between items-center border border-gray-100">
+                    <div>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">Wallet Balance</p>
+                        <p class="text-sm font-black text-gray-900">₦{{ "{:,.2f}".format(current_user.wallet_balance) }}</p>
+                    </div>
+                    
+                    {% if current_user.wallet_balance < total_cost %}
+                        <span class="text-[9px] font-black text-red-500 uppercase bg-red-50 px-3 py-1 rounded-full">Insufficient Funds</span>
+                    {% else %}
+                        <span class="text-[9px] font-black text-emerald-500 uppercase bg-emerald-50 px-3 py-1 rounded-full">Solvency Confirmed</span>
+                    {% endif %}
+                </div>
+
+                {% if current_user.wallet_balance >= total_cost %}
+                    <form action="{{ url_for('main.create_order', listing_id=listing.id) }}" method="POST">
+                        <button type="submit" class="w-full bg-black text-white h-16 rounded-2xl text-xs font-black uppercase tracking-[0.2em] hover:bg-emerald-600 hover:shadow-xl hover:shadow-emerald-200 hover:scale-[1.02] transition-all duration-300">
+                            Authorize Payment
+                        </button>
+                    </form>
+                    <p class="text-center mt-4 text-[8px] font-bold text-gray-400 uppercase">
+                        By clicking, you agree to the FlipTrybe Escrow Terms.
+                    </p>
+                {% else %}
+                    <a href="{{ url_for('main.topup') }}" class="flex items-center justify-center w-full bg-blue-600 text-white h-16 rounded-2xl text-xs font-black uppercase tracking-[0.2em] hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-200 transition-all duration-300">
+                        Top Up Wallet
+                    </a>
+                    <p class="text-center mt-4 text-[8px] font-bold text-red-400 uppercase">
+                        Required: ₦{{ "{:,.2f}".format(total_cost - current_user.wallet_balance) }} more
+                    </p>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

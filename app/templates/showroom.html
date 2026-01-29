@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white min-h-screen">
+    
+    <div class="pt-24 pb-12 px-6 text-center max-w-4xl mx-auto">
+        <p class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 mb-4">Curated Collection</p>
+        <h1 class="text-5xl md:text-7xl font-black uppercase italic tracking-tighter mb-6 text-black">
+            The <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">Showroom</span>
+        </h1>
+        <p class="text-xs font-medium text-gray-500 leading-loose max-w-xl mx-auto">
+            A selection of verified assets available for immediate acquisition. <br>
+            Secured by the FlipTrybe Escrow Protocol.
+        </p>
+    </div>
+
+    <div class="sticky top-[80px] z-30 bg-white/90 backdrop-blur border-y border-gray-100 mb-12">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
+                <button class="px-5 py-2 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap shadow-lg shadow-gray-200">
+                    All Collection
+                </button>
+                <button class="px-5 py-2 bg-gray-50 text-gray-500 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap hover:bg-gray-100 transition-colors">
+                    Automotive
+                </button>
+                <button class="px-5 py-2 bg-gray-50 text-gray-500 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap hover:bg-gray-100 transition-colors">
+                    Real Estate
+                </button>
+                <button class="px-5 py-2 bg-gray-50 text-gray-500 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap hover:bg-gray-100 transition-colors">
+                    Tech
+                </button>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest hidden md:inline">
+                    {{ items|length }} Assets Displayed
+                </span>
+                <div class="relative group">
+                    <button class="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest hover:text-blue-600 transition-colors">
+                        Sort By <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="absolute right-0 top-full mt-2 w-32 bg-white border border-gray-100 rounded-xl shadow-xl p-2 hidden group-hover:block">
+                        <a href="#" class="block px-3 py-2 text-[9px] font-bold hover:bg-gray-50 rounded-lg">Newest First</a>
+                        <a href="#" class="block px-3 py-2 text-[9px] font-bold hover:bg-gray-50 rounded-lg">Price: High-Low</a>
+                        <a href="#" class="block px-3 py-2 text-[9px] font-bold hover:bg-gray-50 rounded-lg">Price: Low-High</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 pb-24">
+        {% if items %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+                {% for item in items %}
+                <a href="{{ url_for('main.product_detail', listing_id=item.id) }}" class="group block cursor-pointer">
+                    <div class="aspect-[4/5] bg-gray-100 rounded-[32px] overflow-hidden relative mb-6">
+                        <img src="{{ url_for('static', filename='uploads/products/' + item.image_filename) }}" 
+                             class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 will-change-transform">
+                        
+                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
+                            <span class="bg-white text-black px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                                View Asset
+                            </span>
+                        </div>
+
+                        <div class="absolute top-4 left-4 flex gap-2">
+                            <span class="px-3 py-1 bg-white/90 backdrop-blur text-black rounded-md text-[8px] font-black uppercase tracking-widest">
+                                {{ item.category }}
+                            </span>
+                            {% if item.price > 1000000 %}
+                            <span class="px-3 py-1 bg-black/80 backdrop-blur text-white rounded-md text-[8px] font-black uppercase tracking-widest border border-white/20">
+                                Premium
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-black uppercase italic tracking-tight group-hover:text-blue-600 transition-colors">
+                                {{ item.title }}
+                            </h3>
+                            <span class="text-lg font-black text-gray-900">₦{{ "{:,.0f}".format(item.price) }}</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-100 pt-3 mt-3">
+                            <span class="flex items-center gap-1">
+                                <i class="fas fa-map-marker-alt text-gray-300"></i> {{ item.state }}
+                            </span>
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span>{{ item.section }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+
+            <div class="mt-24 text-center">
+                <button class="border-b-2 border-black pb-1 text-xs font-black uppercase tracking-[0.2em] hover:text-blue-600 hover:border-blue-600 transition-all">
+                    Load Next Batch
+                </button>
+            </div>
+
+        {% else %}
+            <div class="py-32 text-center bg-gray-50 rounded-[40px] border border-gray-100">
+                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                    <i class="fas fa-wind text-gray-300 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-black uppercase italic text-gray-900 mb-2">The Floor is Empty</h3>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest max-w-md mx-auto">
+                    We are currently curating new assets for the showroom. Check back shortly.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,108 +1,147 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="bg-slate-900 min-h-screen text-white pb-20">
+<div class="max-w-7xl mx-auto px-6 py-12">
     
-    <div class="max-w-7xl mx-auto px-6 pt-12 pb-8 flex justify-between items-end border-b border-white/10">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
         <div>
-            <p class="text-xs font-bold text-indigo-400 uppercase tracking-[0.2em] mb-2">Executive Overview</p>
-            <h1 class="text-4xl font-thin tracking-tight">Financial <span class="font-bold">Performance</span></h1>
+            <h1 class="text-5xl font-black tracking-tighter uppercase italic">
+                HQ <span class="text-red-600 underline">Command</span>
+            </h1>
+            <p class="text-gray-500 font-medium tracking-widest uppercase text-xs mt-2 text-red-600/50">
+                Security Level: OVERSEER // System Time: 2026-01-28
+            </p>
         </div>
-        <a href="{{ url_for('main.admin_panel') }}" class="group flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:bg-indigo-600 hover:border-indigo-500 transition-all duration-300">
-            <span class="text-xs font-bold uppercase tracking-widest group-hover:text-white text-gray-400 transition-colors">Command Center</span>
-            <i class="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
-        </a>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto">
+            <div class="bg-zinc-900 text-white p-8 rounded-[32px] shadow-2xl min-w-[260px]">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-2">Processed Volume</p>
+                <h2 class="text-3xl font-black italic">₦{{ "{:,.2f}".format(total_revenue) }}</h2>
+            </div>
+            <div class="bg-red-600 text-white p-8 rounded-[32px] shadow-2xl min-w-[260px]">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-red-100 mb-2">Locked Liquidity</p>
+                <h2 class="text-3xl font-black italic">₦{{ "{:,.2f}".format(locked_escrow) }}</h2>
+            </div>
+        </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-6 mt-12">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-indigo-600 to-violet-900 p-10 shadow-2xl shadow-indigo-900/50 group hover:-translate-y-1 transition-transform duration-500">
-                <div class="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-opacity">
-                    <i class="fas fa-chart-pie text-9xl transform rotate-12"></i>
-                </div>
-                <p class="relative z-10 text-[10px] font-black uppercase tracking-widest text-indigo-200 mb-1">Net Revenue (5%)</p>
-                <h2 class="relative z-10 text-5xl font-black text-white tracking-tight">₦{{ "{:,.0f}".format(stats.revenue) }}</h2>
-                <div class="relative z-10 mt-6 flex items-center gap-2">
-                    <span class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase">+12% This Week</span>
-                </div>
-            </div>
-
-            <div class="rounded-[2.5rem] bg-slate-800 border border-white/5 p-10 hover:bg-slate-700/50 transition-colors duration-300">
-                <div class="flex justify-between items-start mb-8">
-                    <div class="p-3 bg-emerald-500/10 rounded-2xl">
-                        <i class="fas fa-wallet text-emerald-400 text-xl"></i>
-                    </div>
-                    <span class="text-xs text-gray-500 font-mono">GROSS_VOL</span>
-                </div>
-                <h2 class="text-3xl font-bold text-white mb-1">₦{{ "{:,.0f}".format(stats.gross) }}</h2>
-                <p class="text-xs text-gray-400">Total processed volume</p>
-            </div>
-
-            <div class="rounded-[2.5rem] bg-slate-800 border border-white/5 p-10 hover:bg-slate-700/50 transition-colors duration-300">
-                <div class="flex justify-between items-start mb-8">
-                    <div class="p-3 bg-blue-500/10 rounded-2xl">
-                        <i class="fas fa-users text-blue-400 text-xl"></i>
-                    </div>
-                    <span class="text-xs text-gray-500 font-mono">TOTAL_TRIBE</span>
-                </div>
-                <h2 class="text-3xl font-bold text-white mb-1">{{ stats.users }}</h2>
-                <p class="text-xs text-gray-400">Active members across Nigeria</p>
-            </div>
-        </div>
-
-        <div class="bg-slate-800/50 rounded-[3rem] border border-white/5 overflow-hidden backdrop-blur-xl">
-            <div class="p-8 border-b border-white/5 flex justify-between items-center">
-                <h3 class="text-lg font-bold">Live Transactions</h3>
-                <div class="flex items-center gap-2">
-                    <span class="relative flex h-3 w-3">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                    <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">System Live</span>
-                </div>
-            </div>
+        <div class="lg:col-span-8 space-y-12">
             
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-white/5 text-[10px] uppercase font-bold text-gray-400">
-                        <tr>
-                            <th class="p-6 tracking-wider">Asset Details</th>
-                            <th class="p-6 tracking-wider">Parties</th>
-                            <th class="p-6 tracking-wider">Value</th>
-                            <th class="p-6 text-right tracking-wider">State</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/5 text-sm font-light">
-                        {% for order in orders %}
-                        <tr class="hover:bg-white/5 transition-colors duration-150 group">
-                            <td class="p-6">
-                                <span class="block text-white font-medium group-hover:text-indigo-400 transition">{{ order.listing.title }}</span>
-                                <span class="text-xs text-gray-500">{{ order.order_date.strftime('%H:%M • %d %b') }}</span>
-                            </td>
-                            <td class="p-6">
-                                <div class="flex items-center gap-3">
-                                    <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-bold">
-                                        {{ order.buyer.name[0] }}
-                                    </div>
-                                    <span class="text-gray-300">{{ order.buyer.name }}</span>
-                                </div>
-                            </td>
-                            <td class="p-6 font-medium text-white">₦{{ "{:,.0f}".format(order.total_price) }}</td>
-                            <td class="p-6 text-right">
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider
-                                    {% if order.delivery_status == 'Delivered' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
-                                    {% elif order.delivery_status == 'Flagged' %}bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse
-                                    {% else %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% endif %}">
-                                    {{ order.delivery_status }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <section>
+                <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-6">Identity Verification Queue</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for user in pending_kyc %}
+                    <div class="bg-white border border-gray-100 p-6 rounded-[32px] flex justify-between items-center group hover:border-blue-600 transition-all">
+                        <div>
+                            <p class="font-black text-sm">{{ user.name }}</p>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">{{ user.email }}</p>
+                        </div>
+                        <a href="{{ url_for('admin.verify_user', user_id=user.id) }}" 
+                           class="bg-black text-white text-[8px] font-black uppercase px-4 py-2.5 rounded-xl hover:bg-blue-600 transition-all">
+                            Approve KYC
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="col-span-2 p-12 text-center bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-100">
+                        <p class="text-gray-300 text-[10px] font-black uppercase tracking-widest">No pending identity signals</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section>
+                <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-6">Global Handshake Audit</h3>
+                <div class="bg-white border border-gray-100 rounded-[40px] overflow-hidden shadow-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th class="p-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Order/Asset</th>
+                                <th class="p-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Escrow</th>
+                                <th class="p-6 text-[9px] font-black uppercase tracking-widest text-gray-400">Logistics</th>
+                                <th class="p-6 text-[9px] font-black uppercase tracking-widest text-gray-400 text-right">Gavel</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            {% for order in all_orders %}
+                            <tr class="hover:bg-gray-50/50 transition-colors">
+                                <td class="p-6">
+                                    <p class="text-[10px] font-black text-blue-600 mb-1">{{ order.handshake_id }}</p>
+                                    <p class="font-bold text-sm leading-tight">{{ order.listing.title }}</p>
+                                </td>
+                                <td class="p-6">
+                                    <p class="font-black text-xs">₦{{ "{:,.0f}".format(order.total_price) }}</p>
+                                    <span class="text-[8px] font-black uppercase {{ 'text-green-600' if order.status == 'Released' else 'text-blue-600' }}">
+                                        {{ order.status }}
+                                    </span>
+                                </td>
+                                <td class="p-6">
+                                    {% if not order.driver_id and order.status == 'Escrowed' %}
+                                        <form action="{{ url_for('admin.assign_pilot', order_id=order.id) }}" method="POST" class="flex items-center gap-2">
+                                            <select name="pilot_id" class="text-[9px] font-bold border border-gray-200 rounded-lg p-1.5 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-600">
+                                                <option value="">Pilot</option>
+                                                {% for pilot in pilots %}
+                                                <option value="{{ pilot.id }}">{{ pilot.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button class="bg-black text-white p-2 rounded-lg hover:bg-blue-600"><i class="fas fa-paper-plane text-[8px]"></i></button>
+                                        </form>
+                                    {% else %}
+                                        <p class="text-[10px] font-black text-gray-900 uppercase italic">
+                                            {{ order.pilot.name if order.pilot else 'Awaiting' }}
+                                        </p>
+                                        <p class="text-[8px] font-bold text-gray-400 uppercase">{{ order.delivery_status }}</p>
+                                    {% endif %}
+                                </td>
+                                <td class="p-6 text-right">
+                                    {% if order.status == 'Escrowed' %}
+                                    <a href="{{ url_for('admin.resolve_dispute', dispute_id=0, action='release') }}?order_id={{order.id}}" 
+                                       class="text-[8px] font-black bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all">
+                                        Force
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
 
+        <div class="lg:col-span-4 space-y-8">
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-gray-400">Active Disputes</h3>
+            {% for dispute in active_disputes %}
+            <div class="bg-white border-2 border-red-100 p-8 rounded-[40px] shadow-xl shadow-red-50 relative overflow-hidden group">
+                <div class="flex justify-between items-start mb-6">
+                    <span class="text-[8px] font-black bg-red-600 text-white px-3 py-1 rounded-full uppercase tracking-widest">
+                        Handshake Conflict
+                    </span>
+                    <p class="text-[10px] font-bold text-gray-400">{{ dispute.timestamp.strftime('%H:%M') }}</p>
+                </div>
+                
+                <h4 class="font-black text-xl mb-3 leading-tight italic">{{ dispute.reason }}</h4>
+                <p class="text-xs text-gray-500 mb-8 leading-relaxed">{{ dispute.description }}</p>
+                
+                <div class="flex gap-4">
+                    <a href="{{ url_for('admin.resolve_dispute', dispute_id=dispute.id, action='refund') }}" 
+                       class="flex-1 text-center py-4 bg-gray-100 text-[9px] font-black uppercase rounded-2xl hover:bg-black hover:text-white transition-all">
+                        Refund Buyer
+                    </a>
+                    <a href="{{ url_for('admin.resolve_dispute', dispute_id=dispute.id, action='release') }}" 
+                       class="flex-1 text-center py-4 bg-red-600 text-white text-[9px] font-black uppercase rounded-2xl hover:bg-black transition-all shadow-lg shadow-red-100">
+                        Pay Merchant
+                    </a>
+                </div>
+                <i class="fas fa-gavel absolute -right-4 -bottom-4 text-6xl text-red-50 opacity-20 group-hover:rotate-12 transition-transform"></i>
+            </div>
+            {% else %}
+            <div class="py-24 text-center bg-gray-50 rounded-[40px] border-2 border-dashed border-gray-100">
+                <i class="fas fa-check-double text-gray-200 text-3xl mb-4"></i>
+                <p class="text-gray-400 text-[10px] font-black uppercase tracking-[0.5em]">All signals reconciled</p>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}
