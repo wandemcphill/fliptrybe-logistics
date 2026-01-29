@@ -2,11 +2,11 @@
 # Exit on error
 set -o errexit
 
-# Install dependencies
+# Upgrade pip to ensure the latest pathing logic
+pip install --upgrade pip
+
+# Install dependencies (This installs gunicorn and psycopg2-binary)
 pip install -r requirements.txt
 
 # Run migrations to build the database on Render
-flask db upgrade
-
-# Optional: Seed the database if you want it done automatically
-# python seed_all.py
+flask --app wsgi db upgrade
