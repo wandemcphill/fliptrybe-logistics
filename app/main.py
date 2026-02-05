@@ -14,7 +14,8 @@ from app.utils import (
     create_grid_notification,
     transmit_termii_signal,
     update_merchant_tier,
-    sync_handshake_pulse
+    sync_handshake_pulse,
+    release_order_funds
 )
 
 main = Blueprint('main', __name__)
@@ -109,25 +110,18 @@ def release_funds(order_id):
         return redirect(url_for('main.dashboard'))
     
     try:
-        merchant = User.query.get(order.listing.user_id)
-        merchant.wallet_balance += order.total_price
-        order.status = 'Completed'
-        order.listing.status = 'Sold'
-        
-        # Build #4: Pilot Performance Scoring
+        pilot_rating = None
         if order.driver_id:
-            rating = int(request.form.get('pilot_rating', 5))
-            pilot = User.query.get(order.driver_id)
-            pilot.pilot_rating_sum += rating
-            pilot.pilot_rating_count += 1
+            try:
+                pilot_rating = int(request.form.get('pilot_rating', 5))
+            except Exception:
+                pilot_rating = 5
 
-        db.session.add(Transaction(amount=order.total_price, type='Credit', reference=f"RELEASE-{order.handshake_id}", user_id=merchant.id))
-        db.session.commit()
-
-        # Build #1: Tiering update
-        update_merchant_tier(merchant.id)
-
-        flash("Handshake Finalized. Funds released.", "success")
+        released, msg = release_order_funds(order, pilot_rating=pilot_rating)
+        if released:
+            flash("Handshake Finalized. Funds released.", "success")
+        else:
+            flash(f"Release skipped: {msg}", "warning")
     except Exception as e:
         db.session.rollback(); flash(f"Failure: {str(e)}", "danger")
     return redirect(url_for('main.dashboard'))

@@ -33,6 +33,50 @@ def update_merchant_tier(user_id):
     db.session.commit()
     return user.merchant_tier
 
+def release_order_funds(order, pilot_rating=None):
+    """
+    Releases funds for an order already confirmed delivered.
+    Returns (released: bool, message: str|None).
+    """
+    from app.models import Transaction, User
+
+    if not order:
+        return False, "order missing"
+    if order.status == 'Disputed':
+        return False, "order disputed"
+    if order.status == 'Completed':
+        return False, "already completed"
+
+    release_ref = f"RELEASE-{order.handshake_id}"
+    if Transaction.query.filter_by(reference=release_ref).first():
+        return False, "already released"
+
+    merchant = User.query.get(order.listing.user_id) if order.listing else None
+    if not merchant:
+        return False, "merchant not found"
+
+    merchant.wallet_balance += order.total_price
+    order.status = 'Completed'
+    if order.listing:
+        order.listing.status = 'Sold'
+
+    if pilot_rating is not None and order.driver_id:
+        try:
+            rating = int(pilot_rating)
+        except Exception:
+            rating = 5
+        pilot = User.query.get(order.driver_id)
+        if pilot:
+            pilot.pilot_rating_sum += rating
+            pilot.pilot_rating_count += 1
+
+    db.session.add(Transaction(amount=order.total_price, type='Credit', reference=release_ref, user_id=merchant.id))
+    db.session.commit()
+
+    # Build #1: Tiering update
+    update_merchant_tier(merchant.id)
+    return True, None
+
 # --- 🛰️ 2. SIGNAL TRANSMITTER (TERMII ASYNC) ---
 
 @celery.task(name='app.utils.transmit_termii_signal')
