@@ -1,7 +1,7 @@
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -62,5 +62,11 @@ def create_app(config_class=Config):
     app.register_blueprint(main_blueprint)
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
     app.register_blueprint(admin_blueprint, url_prefix='/admin')
+
+    # --- Minimal health endpoints (no auth, no DB) ---
+    @app.get("/api/health")
+    @app.get("/health")
+    def health():
+        return jsonify({"status": "ok"})
 
     return app, celery
