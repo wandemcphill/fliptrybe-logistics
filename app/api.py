@@ -299,3 +299,495 @@ def assign_driver(order_id):
 @api.post("/orders/<int:order_id>/driver/status")
 def driver_status(order_id):
     return jsonify({"ok": True}), 200
+
+
+def _ok(payload=None, status=200):
+    data = {"ok": True}
+    if isinstance(payload, dict):
+        data.update(payload)
+    return jsonify(data), status
+
+
+def _items(items=None):
+    return jsonify({"items": items or []}), 200
+
+
+def _empty_list():
+    return jsonify([]), 200
+
+
+# --- AUTH ---
+
+@api.post("/auth/register")
+def auth_register():
+    payload = request.get_json(silent=True) or {}
+    name = payload.get("name") or "Demo User"
+    email = payload.get("email") or "demo@fliptrybe.local"
+    user = {
+        "id": 1,
+        "name": name,
+        "email": email,
+        "wallet_balance": 0,
+        "is_verified": False,
+        "tier": "Novice",
+        "role": "buyer",
+        "kyc_tier": 0,
+        "is_available": False,
+    }
+    return jsonify({"token": "demo-token", "user": user}), 200
+
+
+@api.post("/auth/login")
+def auth_login():
+    payload = request.get_json(silent=True) or {}
+    email = payload.get("email") or "demo@fliptrybe.local"
+    user = {
+        "id": 1,
+        "name": "Demo User",
+        "email": email,
+        "wallet_balance": 0,
+        "is_verified": False,
+        "tier": "Novice",
+        "role": "buyer",
+        "kyc_tier": 0,
+        "is_available": False,
+    }
+    return jsonify({"token": "demo-token", "user": user}), 200
+
+
+@api.get("/auth/me")
+def auth_me():
+    user = {
+        "id": 1,
+        "name": "Demo User",
+        "email": "demo@fliptrybe.local",
+        "wallet_balance": 0,
+        "is_verified": False,
+        "tier": "Novice",
+        "role": "buyer",
+        "kyc_tier": 0,
+        "is_available": False,
+    }
+    return jsonify(user), 200
+
+
+@api.post("/auth/set-role")
+def auth_set_role():
+    return _ok({"role": (request.get_json(silent=True) or {}).get("role", "buyer")})
+
+
+# --- FEED / DISCOVERY ---
+
+@api.get("/feed")
+def feed():
+    items = _query_listings()
+    return _items([_listing_to_dict(item) for item in items])
+
+
+@api.get("/locations")
+def locations():
+    return jsonify({"states": [], "cities": [], "lgas": []}), 200
+
+
+@api.get("/heatmap")
+def heatmap():
+    return jsonify({"items": []}), 200
+
+
+@api.get("/heat")
+def heat():
+    return jsonify({"value": 0}), 200
+
+
+@api.get("/metrics")
+def metrics():
+    return jsonify({
+        "mode": "mock",
+        "users": 0,
+        "listings": 0,
+        "gmv": 0,
+        "commissions_total": 0,
+    }), 200
+
+
+@api.get("/kpis/merchant")
+def kpis_merchant():
+    return jsonify({"ok": True, "listings": 0, "orders": 0, "sales": 0}), 200
+
+
+@api.get("/leaderboards/featured")
+def leaderboard_featured():
+    return _items([])
+
+
+@api.get("/leaderboards/states")
+def leaderboard_states():
+    return jsonify({"items": {}}), 200
+
+
+@api.get("/leaderboards/cities")
+def leaderboard_cities():
+    return jsonify({"items": {}}), 200
+
+
+@api.get("/public/sales_ticker")
+def sales_ticker():
+    return jsonify({"items": []}), 200
+
+
+@api.get("/fees/quote")
+def fees_quote():
+    return jsonify({"fee": 0, "currency": "NGN"}), 200
+
+
+# --- RIDES ---
+
+@api.post("/ride/request")
+def ride_request():
+    return _ok({"ride_id": 1})
+
+
+# --- ADMIN ---
+
+@api.get("/admin/overview")
+def admin_overview():
+    return jsonify({
+        "ok": True,
+        "counts": {"users": 0, "listings": 0, "orders": 0},
+    }), 200
+
+
+@api.get("/admin/users")
+def admin_users():
+    return _empty_list()
+
+
+@api.post("/admin/users/<int:user_id>/disable")
+def admin_disable_user(user_id):
+    return _ok({"user_id": user_id})
+
+
+@api.get("/admin/listings")
+def admin_listings():
+    return _empty_list()
+
+
+@api.post("/admin/listings/<int:listing_id>/disable")
+def admin_disable_listing(listing_id):
+    return _ok({"listing_id": listing_id})
+
+
+@api.get("/admin/audit")
+def admin_audit():
+    return _items([])
+
+
+@api.get("/admin/autopilot")
+def admin_autopilot():
+    return jsonify({"enabled": False}), 200
+
+
+@api.post("/admin/autopilot/toggle")
+def admin_autopilot_toggle():
+    payload = request.get_json(silent=True) or {}
+    return jsonify({"enabled": bool(payload.get("enabled"))}), 200
+
+
+@api.post("/admin/autopilot/tick")
+def admin_autopilot_tick():
+    return _ok({"processed": 0})
+
+
+@api.get("/admin/notify-queue")
+def admin_notify_queue():
+    return _items([])
+
+
+@api.post("/admin/notifications/process")
+def admin_notifications_process():
+    return _ok({"processed": 0})
+
+
+@api.post("/admin/notifications/broadcast")
+def admin_notifications_broadcast():
+    return _ok({"sent": 0})
+
+
+@api.get("/admin/commission")
+def admin_commission_list():
+    return _empty_list()
+
+
+@api.post("/admin/commission")
+def admin_commission_upsert():
+    return _ok()
+
+
+@api.post("/admin/commission/<int:rule_id>/disable")
+def admin_commission_disable(rule_id):
+    return _ok({"id": rule_id})
+
+
+# --- WALLET / PAYOUTS ---
+
+@api.get("/wallet")
+def wallet():
+    return jsonify({"wallet": {"balance": 0, "currency": "NGN"}}), 200
+
+
+@api.get("/wallet/ledger")
+def wallet_ledger():
+    return _empty_list()
+
+
+@api.post("/wallet/topup-demo")
+def wallet_topup_demo():
+    return _ok()
+
+
+@api.get("/wallet/payouts")
+def wallet_payouts():
+    return _empty_list()
+
+
+@api.post("/wallet/payouts")
+def wallet_request_payout():
+    return _ok()
+
+
+@api.get("/wallet/admin/payouts")
+def wallet_admin_payouts():
+    return _empty_list()
+
+
+@api.get("/wallet/analytics")
+def wallet_analytics():
+    return jsonify({"total": 0, "inflow": 0, "outflow": 0}), 200
+
+
+@api.post("/wallet/payouts/<int:payout_id>/admin/approve")
+def wallet_admin_approve(payout_id):
+    return _ok({"payout_id": payout_id})
+
+
+@api.post("/wallet/payouts/<int:payout_id>/admin/reject")
+def wallet_admin_reject(payout_id):
+    return _ok({"payout_id": payout_id})
+
+
+@api.post("/wallet/payouts/<int:payout_id>/admin/process")
+def wallet_admin_process(payout_id):
+    return _ok({"payout_id": payout_id})
+
+
+@api.post("/wallet/payouts/<int:payout_id>/admin/pay")
+def wallet_admin_pay(payout_id):
+    return _ok({"payout_id": payout_id})
+
+
+@api.post("/wallet/payouts/<int:payout_id>/admin/mark-paid")
+def wallet_admin_mark_paid(payout_id):
+    return _ok({"payout_id": payout_id})
+
+
+# --- PAYMENTS ---
+
+@api.post("/payments/initialize")
+def payments_initialize():
+    return jsonify({"ok": True, "reference": "demo-ref"}), 200
+
+
+@api.post("/payments/confirm")
+def payments_confirm():
+    return _ok({"reference": (request.get_json(silent=True) or {}).get("reference", "demo-ref")})
+
+
+# --- PAYOUT RECIPIENTS ---
+
+@api.get("/payout/recipient")
+def payout_recipient_get():
+    return jsonify({"recipient": None}), 200
+
+
+@api.post("/payout/recipient")
+def payout_recipient_set():
+    return _ok()
+
+
+# --- RECEIPTS ---
+
+@api.get("/receipts")
+def receipts_list():
+    return jsonify({"items": []}), 200
+
+
+@api.post("/receipts/demo")
+def receipts_demo():
+    return _ok({"receipt_id": 1}, status=201)
+
+
+@api.get("/receipts/<int:receipt_id>/pdf")
+def receipts_pdf(receipt_id):
+    return jsonify({"ok": True, "url": f"/api/receipts/{receipt_id}/pdf"}), 200
+
+
+# --- SETTINGS ---
+
+@api.get("/settings")
+def settings_get():
+    return jsonify({"settings": {}}), 200
+
+
+@api.post("/settings")
+def settings_save():
+    return _ok()
+
+
+# --- SUPPORT ---
+
+@api.get("/support/tickets")
+def support_tickets():
+    return jsonify({"items": []}), 200
+
+
+@api.post("/support/tickets")
+def support_tickets_create():
+    return _ok({"ticket_id": 1})
+
+
+@api.post("/support/tickets/<int:ticket_id>/status")
+def support_tickets_status(ticket_id):
+    return _ok({"ticket_id": ticket_id})
+
+
+# --- NOTIFICATIONS ---
+
+@api.get("/notify/inbox")
+def notify_inbox():
+    return _empty_list()
+
+
+@api.post("/notify/flush-demo")
+def notify_flush_demo():
+    return _ok()
+
+
+# --- DRIVERS ---
+
+@api.get("/drivers")
+def drivers_list():
+    return _empty_list()
+
+
+@api.get("/driver/jobs")
+def driver_jobs():
+    return _empty_list()
+
+
+@api.post("/driver/jobs/<int:job_id>/accept")
+def driver_job_accept(job_id):
+    return _ok({"job_id": job_id})
+
+
+@api.post("/driver/jobs/<int:job_id>/status")
+def driver_job_status(job_id):
+    return _ok({"job_id": job_id})
+
+
+@api.get("/driver/offers")
+def driver_offers():
+    return _empty_list()
+
+
+@api.post("/driver/offers/<int:offer_id>/accept")
+def driver_offer_accept(offer_id):
+    return _ok({"offer_id": offer_id})
+
+
+@api.post("/driver/offers/<int:offer_id>/reject")
+def driver_offer_reject(offer_id):
+    return _ok({"offer_id": offer_id})
+
+
+@api.post("/driver/availability")
+def driver_availability():
+    return _ok()
+
+
+@api.get("/driver/active")
+def driver_active():
+    return jsonify({"job": None}), 200
+
+
+@api.get("/driver/profile")
+def driver_profile():
+    return jsonify({"profile": {}}), 200
+
+
+@api.post("/driver/profile")
+def driver_profile_save():
+    return _ok()
+
+
+# --- MERCHANTS ---
+
+@api.get("/merchant/orders")
+def merchant_orders():
+    return _empty_list()
+
+
+@api.get("/merchant/leaderboard")
+def merchant_leaderboard():
+    return _empty_list()
+
+
+@api.get("/merchant/kpis")
+def merchant_kpis():
+    return jsonify({"ok": True, "listings": 0, "orders": 0, "sales": 0}), 200
+
+
+@api.get("/merchant/drivers")
+def merchant_drivers():
+    return _empty_list()
+
+
+@api.get("/merchants/top")
+def merchants_top():
+    return _items([])
+
+
+@api.get("/merchants/<int:user_id>")
+def merchant_detail(user_id):
+    return jsonify({"id": user_id, "name": "Demo Merchant", "score": 0, "orders": 0, "listings": 0}), 200
+
+
+@api.post("/merchants/<int:user_id>/simulate-sale")
+def merchant_simulate_sale(user_id):
+    return _ok({"user_id": user_id})
+
+
+@api.post("/merchants/<int:user_id>/review")
+def merchant_review(user_id):
+    return _ok({"user_id": user_id})
+
+
+@api.post("/merchants/profile")
+def merchant_profile():
+    return _ok()
+
+
+# --- KYC ---
+
+@api.get("/kyc/status")
+def kyc_status():
+    return jsonify({"status": "pending"}), 200
+
+
+@api.post("/kyc/submit")
+def kyc_submit():
+    return _ok({"status": "received"})
+
+
+@api.post("/kyc/admin/set")
+def kyc_admin_set():
+    return _ok()
