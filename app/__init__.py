@@ -1,7 +1,7 @@
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -22,6 +22,28 @@ def create_app(config_class=Config):
     """
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    @app.before_request
+    def api_only_guard():
+        path = request.path or ""
+        if path.startswith("/api/") or path in ("/api/health", "/health"):
+            return None
+        if path.startswith("/static/"):
+            return None
+        if path == "/admin/escrow/run":
+            return None
+        if path in ("/listings", "/shortlets", "/declutter"):
+            return None
+        if path == "/":
+            return jsonify({
+                "status": "ok",
+                "service": "api",
+                "message": "FlipTrybe API-only service. Frontend is deployed separately."
+            }), 200
+        return jsonify({
+            "status": "error",
+            "message": "API-only service. Use /api/* endpoints."
+        }), 404
 
     # --- 🧬 2. DATABASE & SESSION SYNC ---
     db.init_app(app)
@@ -57,11 +79,16 @@ def create_app(config_class=Config):
     from app.main import main as main_blueprint
     from app.auth import auth as auth_blueprint
     from app.admin import admin as admin_blueprint
+    from app.api import api as api_blueprint, list_listings, list_shortlets, list_declutter
     
     # Synchronizing routes with the central core
     app.register_blueprint(main_blueprint)
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
     app.register_blueprint(admin_blueprint, url_prefix='/admin')
+    app.register_blueprint(api_blueprint, url_prefix='/api')
+    app.add_url_rule("/listings", endpoint="public_listings", view_func=list_listings)
+    app.add_url_rule("/shortlets", endpoint="public_shortlets", view_func=list_shortlets)
+    app.add_url_rule("/declutter", endpoint="public_declutter", view_func=list_declutter)
 
     # --- Minimal health endpoints (no auth, no DB) ---
     @app.get("/api/health")
