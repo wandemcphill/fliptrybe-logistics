@@ -1,7 +1,7 @@
 """Create disputes table
 
 Revision ID: f3a1b2c4d5e6
-Revises: 
+Revises: 8b1d0c2a3e4f
 Create Date: 2026-02-05 00:00:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'f3a1b2c4d5e6'
-down_revision = None
+down_revision = '8b1d0c2a3e4f'
 branch_labels = None
 depends_on = None
 
@@ -37,7 +37,7 @@ def upgrade():
             sa.Column('id', sa.Integer(), primary_key=True),
             sa.Column('reason', sa.String(length=255), nullable=False),
             sa.Column('status', sa.String(length=20), nullable=True),
-            sa.Column('created_at', sa.DateTime(), nullable=True),
+            sa.Column('created_at', sa.DateTime(), server_default=sa.func.now(), nullable=True),
             order_col,
             claimant_col,
         )
