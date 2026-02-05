@@ -1,49 +1,18 @@
-services:
-  # --- 🛰️ NODE 1: THE WEB ENGINE ---
+﻿services:
   - type: web
-    name: fliptrybe-web
-    plan: starter
+    name: tri-o-fliptrybe
     runtime: python
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn run:app"
+    rootDir: Fliptrybe/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:\
     envVars:
+      - key: FLIPTRYBE_ENV
+        value: prod
+      - key: ESCROW_CRON_TOKEN
+        sync: false
+      - key: SECRET_KEY
+        sync: false
       - key: DATABASE_URL
-        fromDatabase:
-          name: fliptrybe-db
-          property: connectionString
+        sync: false
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: fliptrybe-cache
-          property: connectionString
-      - fromGroup: fliptrybe-secrets
-
-  # --- 🚁 NODE 2: THE SIGNAL WORKER (CELERY) ---
-  - type: worker
-    name: fliptrybe-worker
-    plan: starter
-    runtime: python
-    buildCommand: "./build.sh"
-    startCommand: "celery -A run.celery worker --loglevel=info"
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: fliptrybe-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: fliptrybe-cache
-          property: connectionString
-      - fromGroup: fliptrybe-secrets
-
-  # --- 🧪 NODE 3: THE CACHE (REDIS) ---
-  - type: redis
-    name: fliptrybe-cache
-    plan: free
-    ipAllowList: []
-
-# --- Vault: THE INDUSTRIAL DATABASE (POSTGRES) ---
-databases:
-  - name: fliptrybe-db
-    plan: starter
+        sync: false
